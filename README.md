@@ -1,0 +1,180 @@
+# TaskCap
+
+TaskCap 是一个面向 Windows 的轻量桌面任务夹应用，提供悬浮灵动岛、任务提醒、专注计时和快速新增能力。
+
+本项目基于 [howardrock88/TaskIsland](https://github.com/howardrock88/TaskIsland) 的开源项目思路做 Windows 系统适配，**感谢原作者 howardrock88 的开源工作**。原项目为 macOS 原生应用，本项目将其核心交互逻辑移植到 Windows 平台，技术栈全面替换为 Tauri + React + TypeScript + Rust，并加入 Windows 专属适配。
+
+郑重声明：本项目不是 TaskIsland 官方产品。
+
+## About
+
+TaskCap: Windows desktop adaptation of howardrock88/TaskIsland, built with Tauri, React, TypeScript and Rust as a lightweight floating task manager.
+
+## 页面截图
+
+![TaskCap 产品预览](screenshots/overview.png)
+
+## 联系方式
+
+### 微信交流
+
+扫码添加微信（备注 GitHub）：
+
+<img src="screenshots/wechat-qrcode.png" alt="微信二维码" width="240" height="290">
+
+微信号：`pixel-cafetime`
+
+微信公众号：像素与咖啡时光
+
+抖音号：像素与咖啡时光
+
+## 当前能力
+
+- 悬浮灵动岛：三态设计（收起 / 专注 / 展开），任务优先级一眼可见，拖动自由定位。
+- 任务提醒：截止到点、指定提醒时间、喝水和久坐提醒，统一排队展示，任务提醒优先插队。
+- 专注计时：单任务专注倒计时，支持暂停与停止。
+- 快速新增：全局快捷键（默认 `Ctrl+Alt+N`）呼出，支持自然语言解析时间和优先级。
+- 任务面板：按优先级分组，支持今日队列、标签、项目、截止时间和预计时长。
+- 系统托盘：开机自启、最小化到托盘，主面板默认不进入任务栏。
+- 数据本地化：任务和配置全部存储在本地 SQLite，无云同步。
+
+## 与原项目的关系
+
+| 项目 | 原项目 TaskIsland | 本项目 TaskCap |
+| --- | --- | --- |
+| 目标平台 | macOS | Windows 桌面端 |
+| 核心技术 | macOS 原生 Swift / SwiftUI | Tauri 2, React 18, TypeScript, Rust |
+| 主要功能 | 浮动任务岛、提醒、专注计时 | 同上，并加入 Windows 专属适配 |
+| 启动方式 | macOS 原生应用 | Windows 桌面应用（NSIS 安装包） |
+| 与原项目关系 | 原版 | 移植适配，业务逻辑与交互模型对齐原版 |
+
+## 系统要求
+
+- Windows 10 或 Windows 11。
+- Microsoft Edge WebView2 Runtime。Windows 11 通常已内置，Windows 10 如缺失需单独安装。
+- Node.js 18+ 和 npm（开发环境）。
+- Rust 1.77.2+，建议使用 MSVC 工具链（开发环境）。
+- Visual Studio Build Tools，需包含 Desktop development with C++ 相关组件（开发环境）。
+
+## 安装与开发
+
+Windows 源码开发需要安装 Visual Studio Build Tools 2022，并勾选 `Desktop development with C++`。项目脚本会自动探测本机 VS Build Tools 安装位置，无需手动配置固定路径。
+
+```powershell
+git clone <your-repo-url>
+cd taskcap
+npm install
+npm run tauri:dev
+```
+
+开发检查：
+
+```powershell
+npm run tauri:check
+```
+
+构建安装包：
+
+```powershell
+npm run tauri:build
+```
+
+Tauri 打包目标当前配置为 NSIS 安装包，产物位于项目平级的 `.build\taskcap-target\release\bundle\nsis\` 目录。
+
+如果出现 `Visual Studio Build Tools not found`，请安装 Visual Studio Build Tools 2022，并确认已勾选 `Desktop development with C++` 组件。
+
+## 数据存储
+
+应用数据默认存储在：
+
+```text
+%APPDATA%\taskcap\taskcap.db    # 任务数据库（SQLite）
+%APPDATA%\taskcap\config.json   # 应用配置
+```
+
+**请不要提交上述文件，也不要把截图、日志或配置文件中的敏感内容公开。**
+
+## 项目结构
+
+```text
+taskcap/
+├── src/                         # React + TypeScript 前端
+│   ├── lib/                     # 工具函数与 hooks
+│   ├── styles/                  # CSS 样式
+│   ├── windows/                 # 各窗口组件
+│   │   ├── island/              # 灵动岛窗口
+│   │   ├── panel/               # 任务面板窗口
+│   │   └── quickadd/            # 快速新增窗口
+│   ├── main.tsx                 # 应用入口
+│   └── version.ts               # 版本号
+├── src-tauri/                   # Tauri + Rust 后端
+│   ├── src/                     # Rust 源码
+│   ├── icons/                   # 应用图标
+│   ├── capabilities/            # Tauri 权限配置
+│   ├── tauri.conf.json          # Tauri 配置
+│   └── Cargo.toml               # Rust 依赖
+├── public/                      # 静态资源（图标、加载动画）
+├── scripts/                     # Windows 开发脚本
+├── screenshots/                 # 产品截图
+├── package.json                 # 前端依赖与脚本
+└── README.md                    # 项目说明
+```
+
+## 不应提交的文件
+
+仓库已通过 `.gitignore` 忽略以下内容：
+
+- `node_modules/`
+- `dist/`
+- `src-tauri/target/` 和构建输出目录
+- `.env`, `.env.local`, `.env.*.local`
+- `*.log`, `*.err.log`, `*.out.log`
+- 根目录开发截图和调试文件
+- 本地启动验证截图 `verify-startup/`
+- IDE 配置和系统临时文件
+
+## 依赖
+
+前端运行依赖：
+
+- React 18
+- React DOM 18
+- Tauri JavaScript API 2
+- lucide-react
+
+前端开发依赖：
+
+- Vite 5
+- TypeScript 5
+- Tauri CLI 2
+- React 类型定义
+
+Rust 后端依赖：
+
+- tauri 2.11，启用 tray-icon, image-png
+- tauri-plugin-log
+- tauri-plugin-single-instance，单实例守卫，防止应用重复多开
+- tauri-plugin-global-shortcut，全局快捷键
+- tauri-plugin-notification，系统通知
+- tauri-plugin-dialog，文件对话框
+- rusqlite（bundled），本地 SQLite 存储
+- serde / serde_json
+- chrono / uuid / regex / log
+
+## 更新日志
+
+完整发布记录见 GitHub Releases。
+
+### v0.1.0
+
+- 首个正式发布版本，提供悬浮灵动岛、任务提醒、专注计时、快速新增、任务面板、系统托盘和本地 SQLite 存储等完整能力。
+- 灵动岛三态（收起 / 专注 / 展开），任务提醒统一队列，任务提醒优先级高于喝水 / 久坐软提醒。
+- 安装包：`TaskCap_0.1.0_x64-setup.exe`。
+
+## 许可证
+
+本项目使用 MIT License，与原项目 README 中声明的许可证保持一致。详见 [LICENSE](LICENSE)。
+
+## 免责声明
+
+本项目仅用于学习和研究目的。TaskIsland 原版产品功能和交互设计版权归原作者所有。本项目仅做平台移植，不用于商业用途。

@@ -1,0 +1,382 @@
+/* Win11 优先：CSS blur 近似液态玻璃；后续可接 Acrylic */
+
+.glass-surface {
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.78) 0%,
+    rgba(255, 255, 255, 0.52) 100%
+  );
+  /* backdrop-filter 由 inline style 管理，CSS 类不声明，避免 WebView2 透明窗口出现矩形模糊层 */
+  border: 1px solid rgba(255, 255, 255, 0.55);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.42);
+}
+
+@media (prefers-color-scheme: dark) {
+  .glass-surface {
+    background: linear-gradient(
+      180deg,
+      rgba(36, 38, 52, 0.82) 0%,
+      rgba(24, 26, 36, 0.68) 100%
+    );
+    border-color: rgba(255, 255, 255, 0.14);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  }
+}
+
+.island-capsule {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  height: 100%;
+  padding: 0 12px;
+  border: none;
+  border-radius: 999px;
+  cursor: pointer;
+  color: inherit;
+}
+
+.island-icon {
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
+}
+
+.island-text {
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.panel-shell {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  border-radius: 16px;
+  color: #1a1a2e;
+}
+
+.panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px 10px;
+}
+
+.panel-title-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.panel-title-group h1 {
+  margin: 0;
+  font-size: 15px;
+}
+
+.panel-subtitle {
+  margin: 2px 0 0;
+  font-size: 11px;
+  opacity: 0.6;
+}
+
+.panel-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+}
+
+.panel-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.panel-body {
+  flex: 1;
+  padding: 12px 16px 16px;
+  font-size: 13px;
+  line-height: 1.5;
+  min-height: 0;
+}
+
+.panel-body-scroll {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  overflow: hidden;
+}
+
+.panel-focus-card {
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: rgba(59, 158, 255, 0.12);
+}
+
+.panel-focus-label {
+  display: block;
+  font-size: 11px;
+  opacity: 0.65;
+}
+
+.panel-focus-title {
+  margin: 4px 0 0;
+  font-size: 14px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.panel-add-row {
+  display: flex;
+  gap: 8px;
+  width: 100%;
+}
+
+.panel-add-input {
+  flex: 1;
+  border: none;
+  outline: none;
+  background: rgba(255, 255, 255, 0.35);
+  border-radius: 10px;
+  padding: 8px 10px;
+  font-size: 13px;
+}
+
+.panel-add-btn {
+  flex-shrink: 0;
+}
+
+.panel-view-tabs {
+  display: flex;
+  gap: 6px;
+}
+
+.panel-tab {
+  border: none;
+  border-radius: 999px;
+  padding: 4px 12px;
+  font-size: 12px;
+  cursor: pointer;
+  background: rgba(0, 0, 0, 0.06);
+}
+
+.panel-tab.is-active {
+  background: #3b9eff;
+  color: #fff;
+  font-weight: 600;
+}
+
+.panel-task-list {
+  flex: 1;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.panel-empty {
+  padding: 24px 8px;
+  text-align: center;
+  opacity: 0.55;
+}
+
+.panel-task-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.28);
+}
+
+.panel-task-row.is-current {
+  outline: 1px solid rgba(59, 158, 255, 0.45);
+}
+
+.panel-task-check {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border: 1px solid rgba(0, 0, 0, 0.15);
+  border-radius: 6px;
+  background: transparent;
+  cursor: pointer;
+  flex-shrink: 0;
+  color: #3b9eff;
+}
+
+.panel-task-main {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+  padding: 0;
+  color: inherit;
+}
+
+.panel-task-title {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.panel-task-meta {
+  display: block;
+  margin-top: 2px;
+  font-size: 11px;
+  opacity: 0.6;
+}
+
+.panel-current-dot {
+  color: #3b9eff;
+  flex-shrink: 0;
+}
+
+.panel-task-delete {
+  opacity: 0.5;
+}
+
+.panel-task-delete:hover {
+  opacity: 1;
+}
+
+.panel-quickadd-link {
+  align-self: center;
+  font-size: 12px;
+  opacity: 0.7;
+}
+
+/* 快速新增窗口：青绿玻璃，与主面板统一。
+   高度自适应内容（默认仅一条输入行），窗口其余区域透明；
+   Tab 菜单浮在卡片下方，窗口固定高度足够容纳，不会被裁切。 */
+.quickadd-shell {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+  height: auto;
+  padding: 16px;
+  border-radius: 16px;
+  overflow: visible;
+  box-sizing: border-box;
+  position: relative;
+}
+
+.quickadd-input-row {
+  display: flex;
+  align-items: stretch;
+  width: 100%;
+  position: relative;
+}
+
+.quickadd-shell .quick-add-input-wrap {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.quickadd-input {
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  outline: none;
+  background: var(--ti-input-bg);
+  color: inherit;
+  border-radius: 12px;
+  padding: 11px 44px 11px 13px;
+  font-size: 15px;
+}
+
+.quickadd-input::placeholder {
+  color: var(--ti-text-dim);
+}
+
+.quickadd-input:focus {
+  border-color: var(--ti-accent-ring);
+}
+
+.panel-surface-dark .quickadd-input {
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.quickadd-add-btn {
+  position: absolute;
+  right: 6px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+/* 快速新增窗口内菜单封顶，配合 300px 扩展高度，避免被窗口底部裁切 */
+.quickadd-shell .quick-add-token-menu {
+  max-height: 200px;
+}
+
+.quickadd-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.quickadd-hint {
+  font-size: 11px;
+  color: var(--ti-text-dim);
+}
+
+.quickadd-esc {
+  border: none;
+  background: transparent;
+  color: var(--ti-text-dim);
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 4px 6px;
+  border-radius: 8px;
+}
+
+.quickadd-esc:hover {
+  background: rgba(255, 255, 255, 0.4);
+  color: inherit;
+}
+
+.panel-surface-dark .quickadd-esc:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.icon-btn,
+.ghost-btn,
+.primary-btn {
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.icon-btn {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  background: rgba(0, 0, 0, 0.06);
+}
+
+.ghost-btn {
+  padding: 6px 12px;
+  background: transparent;
+}
+
+.primary-btn {
+  padding: 6px 14px;
+  background: #3b9eff;
+  color: #fff;
+  font-weight: 600;
+}

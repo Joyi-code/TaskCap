@@ -1,0 +1,533 @@
+.island-shell {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  box-sizing: border-box;
+  isolation: isolate;
+  background-clip: padding-box;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  transition:
+    border-radius 0.18s ease,
+    opacity 0.16s ease,
+    background 0.16s ease,
+    backdrop-filter 0.16s ease;
+  /* 内描边四边完整；外边框在透明窗口底边易被裁切 */
+  border: none;
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.36),
+    inset 0 1px 0 rgba(255, 255, 255, 0.22);
+}
+
+.island-shell.island-dark {
+  color: rgba(238, 242, 255, 0.94);
+}
+
+.island-shell.island-dark.glass-surface {
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.island-shell.island-dark .island-preview-action,
+.island-shell.island-dark .island-action-btn {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.island-shell.island-dark .island-attention-sub,
+.island-shell.island-dark .island-preview-index,
+.island-shell.island-dark .island-preview-empty {
+  color: rgba(238, 242, 255, 0.62);
+}
+
+.island-shell.island-dark .island-expanded-divider {
+  background: rgba(255, 255, 255, 0.16);
+}
+
+.island-radius-collapsed {
+  border-radius: 15px;
+  clip-path: inset(0 round 15px);
+}
+
+.island-radius-attention {
+  border-radius: 26px;
+  clip-path: inset(0 round 26px);
+}
+
+.island-radius-expanded {
+  border-radius: 28px;
+  clip-path: inset(0 round 28px);
+}
+
+.island-layer {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transform: scale(0.985);
+  transition: opacity 0.07s ease, transform 0.07s ease;
+  pointer-events: none;
+}
+
+.island-layer.is-visible {
+  opacity: 1;
+  transform: scale(1);
+  pointer-events: auto;
+}
+
+.island-collapsed-btn,
+.island-attention-btn {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  height: 100%;
+  border: none;
+  background: transparent;
+  color: inherit;
+  cursor: grab;
+  padding: 0 12px;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.island-collapsed-btn:active,
+.island-attention-btn:active {
+  cursor: grabbing;
+}
+
+.island-done-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  margin: 0 auto;
+}
+
+.island-priority-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 11px;
+  width: 100%;
+}
+
+.island-priority-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 5px;
+}
+
+.island-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.priority-high {
+  background: #ff5a5f;
+  box-shadow: 0 0 6px rgba(255, 90, 95, 0.45);
+}
+
+.priority-medium {
+  background: #ffb020;
+  box-shadow: 0 0 6px rgba(255, 176, 32, 0.4);
+}
+
+.priority-low {
+  background: #5ac8fa;
+  box-shadow: 0 0 6px rgba(90, 200, 250, 0.4);
+}
+
+.island-priority-num {
+  font-size: 12px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.island-attention-btn {
+  gap: 9px;
+  padding: 0 12px;
+}
+
+.island-attention-btn.is-reminder .island-attention-icon {
+  background: rgba(255, 149, 0, 0.22);
+  animation: island-reminder-pulse 1.6s ease-in-out infinite;
+}
+
+@keyframes island-reminder-pulse {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.06);
+    opacity: 0.82;
+  }
+}
+
+.island-attention-icon {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: rgba(59, 158, 255, 0.16);
+}
+
+.island-attention-copy {
+  flex: 1;
+  min-width: 0;
+  text-align: left;
+}
+
+.island-attention-title {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.island-attention-sub {
+  display: block;
+  margin-top: 2px;
+  font-size: 10px;
+  font-weight: 600;
+  opacity: 0.65;
+}
+
+.island-attention-badge {
+  flex-shrink: 0;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 5px 8px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(59, 158, 255, 0.25);
+}
+
+.island-attention-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  flex-shrink: 0;
+}
+
+.island-attention-action-btn {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border: none;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.14);
+  color: inherit;
+  cursor: pointer;
+}
+
+.island-attention-action-btn:focus-visible {
+  outline: 2px solid rgba(59, 158, 255, 0.6);
+  outline-offset: 2px;
+}
+
+.island-expanded-layout {
+  display: flex;
+  align-items: stretch;
+  gap: 8px;
+  width: 100%;
+  height: 100%;
+  padding: 11px 16px;
+}
+
+.island-preview-list {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-self: stretch;
+  gap: 5px;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.island-preview-empty {
+  font-size: 12px;
+  font-weight: 600;
+  opacity: 0.7;
+  text-align: center;
+}
+
+.island-preview-row {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  height: 30px;
+  flex-shrink: 0;
+  width: 100%;
+  line-height: 1;
+  padding: 0 7px 0 9px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.055);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  animation: island-preview-fade 0.18s ease;
+}
+
+.island-preview-row.is-current {
+  background: rgba(255, 255, 255, 0.11);
+  border-color: rgba(59, 158, 255, 0.24);
+}
+
+.island-preview-row.is-marked-complete {
+  opacity: 0.72;
+}
+
+@keyframes island-preview-fade {
+  from {
+    opacity: 0.35;
+    transform: translateY(2px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.island-preview-index {
+  flex-shrink: 0;
+  font-size: 9px;
+  font-weight: 700;
+  opacity: 0.55;
+  font-variant-numeric: tabular-nums;
+  padding: 0 2px;
+}
+
+.island-preview-title {
+  flex: 1;
+  font-size: 13.5px;
+  font-weight: 500;
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+
+.island-preview-row.is-current .island-preview-title {
+  font-weight: 650;
+}
+
+.island-preview-row.is-marked-complete .island-preview-title {
+  text-decoration: line-through;
+  text-decoration-thickness: 1.5px;
+  text-decoration-color: rgba(40, 40, 60, 0.65);
+}
+
+.island-shell.island-dark .island-preview-row.is-marked-complete .island-preview-title {
+  text-decoration-color: rgba(220, 226, 255, 0.82);
+}
+
+.island-preview-current {
+  flex-shrink: 0;
+  font-size: 10px;
+  font-weight: 650;
+  line-height: 1;
+  padding: 3px 5px;
+  border-radius: 999px;
+  color: rgba(26, 42, 48, 0.66);
+  background: rgba(255, 255, 255, 0.22);
+}
+
+.island-shell.island-dark .island-preview-current {
+  color: rgba(238, 242, 255, 0.72);
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.island-preview-meta {
+  flex-shrink: 0;
+  max-width: 34%;
+  font-size: 10px;
+  font-weight: 650;
+  line-height: 1.2;
+  opacity: 0.72;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.island-shell.island-dark .island-preview-meta {
+  opacity: 0.82;
+}
+
+.island-preview-action {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+  border: none;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.16);
+  color: #3b9eff;
+  cursor: pointer;
+}
+
+.island-preview-action.danger {
+  color: #ff5a5f;
+}
+
+.island-preview-action.is-done {
+  background: rgba(59, 158, 255, 0.28);
+  color: #3b9eff;
+}
+
+.island-expanded-divider {
+  align-self: stretch;
+  width: 1px;
+  flex-shrink: 0;
+  background: rgba(255, 255, 255, 0.24);
+  margin: 6px 0;
+}
+
+.island-expanded-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  align-items: center;
+  justify-content: space-evenly;
+  align-self: center;
+  flex-shrink: 0;
+  width: 34px;
+  /* 固定最小高度，使按钮间距独立于任务行高度 */
+  min-height: 100px;
+}
+
+.island-preview-row-deleting {
+  opacity: 0.75;
+  background: rgba(255, 90, 95, 0.10);
+  border-color: rgba(255, 90, 95, 0.22);
+}
+
+.island-preview-title-deleting {
+  text-decoration: line-through;
+  text-decoration-thickness: 1.5px;
+  opacity: 0.65;
+}
+
+.island-delete-countdown {
+  flex-shrink: 0;
+  font-size: 10px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: #ff5a5f;
+  min-width: 18px;
+  text-align: center;
+}
+
+.island-action-btn {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+  border: none;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.16);
+  cursor: pointer;
+  color: inherit;
+}
+
+.island-action-btn.is-active {
+  background: rgba(59, 158, 255, 0.22);
+  color: #3b9eff;
+}
+
+/* 自定义提醒层 */
+.island-reminder-btn {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  height: 100%;
+  border: none;
+  cursor: pointer;
+  overflow: hidden;
+  padding: 0;
+  border-radius: inherit;
+}
+
+.island-reminder-btn.is-water {
+  background: rgba(59, 158, 255, 0.13);
+}
+
+.island-reminder-btn.is-sitting {
+  background: rgba(255, 176, 32, 0.13);
+}
+
+.island-reminder-track {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+}
+
+.island-reminder-scroll {
+  display: inline-flex;
+  align-items: center;
+  white-space: nowrap;
+  font-size: 14px;
+  font-weight: 650;
+  letter-spacing: 0.01em;
+  animation: island-marquee 10s linear infinite;
+}
+
+.island-reminder-scroll.is-water {
+  color: #3b9eff;
+}
+
+.island-reminder-scroll.is-sitting {
+  color: #ff9820;
+}
+
+.island-shell.island-dark .island-reminder-scroll.is-water {
+  color: #78c2ff;
+}
+
+.island-shell.island-dark .island-reminder-scroll.is-sitting {
+  color: #ffcc55;
+}
+
+.island-reminder-dismiss {
+  font-size: 11px;
+  font-weight: 500;
+  opacity: 0.55;
+}
+
+@keyframes island-marquee {
+  0%   { transform: translateX(360px); }
+  100% { transform: translateX(calc(-100% - 16px)); }
+}
+
+/* 专注时间到 — 红边脉冲提醒 */
+.island-shell.island-focus-ended {
+  animation: island-focus-end-pulse 1.2s ease-in-out infinite;
+}
+
+@keyframes island-focus-end-pulse {
+  0%, 100% {
+    box-shadow:
+      inset 0 0 0 1.5px rgba(255, 90, 95, 0.55),
+      inset 0 1px 0 rgba(255, 255, 255, 0.22);
+  }
+  50% {
+    box-shadow:
+      inset 0 0 0 2px rgba(255, 90, 95, 0.9),
+      inset 0 1px 0 rgba(255, 255, 255, 0.15),
+      0 0 10px rgba(255, 90, 95, 0.32);
+  }
+}
