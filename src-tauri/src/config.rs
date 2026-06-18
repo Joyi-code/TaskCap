@@ -183,6 +183,7 @@ mod tests {
             island_offset_x: 12,
             island_offset_y: 24,
             capsule_transparency_percent: 35,
+            ..AppConfig::default()
         };
         let raw = serde_json::to_string(&config).unwrap();
         let parsed: AppConfig = serde_json::from_str(&raw).unwrap();

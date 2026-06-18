@@ -133,6 +133,7 @@ mod tests {
             project_name: None,
             estimated_minutes: None,
             today_sort_index: None,
+            today_added_date: None,
             subtasks_raw_value: None,
             focus_started_at: None,
             focus_accumulated_seconds: None,

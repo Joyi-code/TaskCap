@@ -1,7 +1,7 @@
 use super::*;
 use crate::models::TaskPriority;
 use crate::parser::parse;
-use chrono::{TimeZone, Utc};
+use chrono::{Local, TimeZone, Timelike, Utc};
 use std::collections::HashMap;
 use tempfile::NamedTempFile;
 
@@ -128,6 +128,7 @@ fn taskcap_checks() {
             project_name: None,
             estimated_minutes: None,
             today_sort_index: None,
+            today_added_date: None,
             subtasks_raw_value: None,
             focus_started_at: None,
             focus_accumulated_seconds: Some(0.0),
@@ -146,10 +147,10 @@ fn taskcap_checks() {
         assert_eq!(parsed.priority, TaskPriority::High);
         assert_eq!(parsed.tags, vec!["工作"]);
         assert_eq!(parsed.estimated_minutes, Some(30));
-        let due = parsed.due_at.unwrap();
-        assert_eq!(due.day(), 2);
-        assert_eq!(due.hour(), 10);
-        assert_eq!(due.minute(), 0);
+        let due_local = parsed.due_at.unwrap().with_timezone(&Local);
+        assert_eq!(due_local.day(), 2);
+        assert_eq!(due_local.hour(), 10);
+        assert_eq!(due_local.minute(), 0);
     }
 
     {
@@ -172,10 +173,10 @@ fn taskcap_checks() {
         let parsed = parse("每周五 18:00 发周报 #工作 !高", TaskPriority::Medium, now);
         assert_eq!(parsed.repeat_rule, Some(crate::models::TaskRepeatRule::Weekly));
         assert_eq!(parsed.title, "发周报");
-        let due = parsed.due_at.unwrap();
-        assert_eq!(due.weekday().num_days_from_monday(), 4);
-        assert_eq!(due.hour(), 18);
-        assert_eq!(due.minute(), 0);
+        let due_local = parsed.due_at.unwrap().with_timezone(&Local);
+        assert_eq!(due_local.weekday().num_days_from_monday(), 4);
+        assert_eq!(due_local.hour(), 18);
+        assert_eq!(due_local.minute(), 0);
     }
 
     {

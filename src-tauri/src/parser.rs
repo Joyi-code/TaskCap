@@ -1,5 +1,5 @@
 use crate::models::{TaskPriority, TaskRepeatRule};
-use chrono::{DateTime, Datelike, Duration, TimeZone, Timelike, Utc, Weekday};
+use chrono::{DateTime, Datelike, Duration, Local, TimeZone, Utc, Weekday};
 use regex::Regex;
 
 #[derive(Debug, Clone, PartialEq)]
@@ -223,9 +223,10 @@ fn parsed_repeat_rule(text: &str) -> RepeatParseResult {
 }
 
 fn parsed_time(text: &str) -> TimeParseResult {
-    let patterns: [(&str, bool); 3] = [
+    let patterns: [(&str, bool); 4] = [
         (r"(\d{1,2})[:：](\d{2})", false),
         (r"(\d{1,2})\s*点半", true),
+        (r"(\d{1,2})\s*点(\d{1,2})\s*分?", false),
         (r"(\d{1,2})\s*点", false),
     ];
 
@@ -280,14 +281,17 @@ fn apply_time(components: Option<(u32, u32)>, date: DateTime<Utc>) -> DateTime<U
 }
 
 fn apply_hm(hour: u32, minute: u32, date: DateTime<Utc>) -> DateTime<Utc> {
-    Utc.with_ymd_and_hms(date.year(), date.month(), date.day(), hour, minute, 0)
+    let local = date.with_timezone(&Local);
+    Local
+        .with_ymd_and_hms(local.year(), local.month(), local.day(), hour, minute, 0)
         .single()
+        .map(|d| d.with_timezone(&Utc))
         .unwrap_or(date)
 }
 
 fn next_weekday(from: DateTime<Utc>, target: Weekday) -> DateTime<Utc> {
     let start = start_of_day(from);
-    let current = start.weekday();
+    let current = start.with_timezone(&Local).weekday();
     let mut offset = target.num_days_from_monday() as i32 - current.num_days_from_monday() as i32;
     if offset <= 0 {
         offset += 7;
@@ -297,7 +301,7 @@ fn next_weekday(from: DateTime<Utc>, target: Weekday) -> DateTime<Utc> {
 
 fn next_apple_weekday(from: DateTime<Utc>, apple_weekday: i32) -> DateTime<Utc> {
     let start = start_of_day(from);
-    let current_apple = apple_weekday_number(start.weekday());
+    let current_apple = apple_weekday_number(start.with_timezone(&Local).weekday());
     let mut offset = apple_weekday - current_apple;
     if offset <= 0 {
         offset += 7;
@@ -318,13 +322,16 @@ fn apple_weekday_number(weekday: Weekday) -> i32 {
 }
 
 fn start_of_day(dt: DateTime<Utc>) -> DateTime<Utc> {
-    Utc.with_ymd_and_hms(dt.year(), dt.month(), dt.day(), 0, 0, 0)
+    let local = dt.with_timezone(&Local);
+    Local
+        .with_ymd_and_hms(local.year(), local.month(), local.day(), 0, 0, 0)
         .single()
+        .map(|d| d.with_timezone(&Utc))
         .unwrap_or(dt)
 }
 
 fn same_day(a: DateTime<Utc>, b: DateTime<Utc>) -> bool {
-    a.date_naive() == b.date_naive()
+    a.with_timezone(&Local).date_naive() == b.with_timezone(&Local).date_naive()
 }
 
 fn normalized_title(text: &str) -> String {
@@ -468,7 +475,19 @@ fn non_overlapping_ranges(ranges: Vec<(usize, usize)>) -> Vec<(usize, usize)> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use chrono::TimeZone;
+    use chrono::{TimeZone, Timelike};
+
+    #[test]
+    fn parses_chinese_time_with_minutes() {
+        let now = Utc.with_ymd_and_hms(2026, 6, 1, 12, 0, 0).unwrap();
+        for input in &["明天9点45开会", "明天9点45分开会"] {
+            let parsed = parse(input, TaskPriority::Medium, now);
+            assert_eq!(parsed.title, "开会", "title mismatch for: {input}");
+            let due_local = parsed.due_at.unwrap().with_timezone(&Local);
+            assert_eq!(due_local.hour(), 9, "hour mismatch for: {input}");
+            assert_eq!(due_local.minute(), 45, "minute mismatch for: {input}");
+        }
+    }
 
     #[test]
     fn parses_tomorrow_time_priority_tag_duration() {
@@ -478,9 +497,9 @@ mod tests {
         assert_eq!(parsed.priority, TaskPriority::High);
         assert_eq!(parsed.tags, vec!["工作"]);
         assert_eq!(parsed.estimated_minutes, Some(30));
-        let due = parsed.due_at.unwrap();
-        assert_eq!(due.day(), 2);
-        assert_eq!(due.hour(), 10);
-        assert_eq!(due.minute(), 0);
+        let due_local = parsed.due_at.unwrap().with_timezone(&Local);
+        assert_eq!(due_local.day(), 2);
+        assert_eq!(due_local.hour(), 10);
+        assert_eq!(due_local.minute(), 0);
     }
 }
