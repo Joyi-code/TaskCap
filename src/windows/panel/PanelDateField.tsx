@@ -1,8 +1,70 @@
 import { CalendarDays, ChevronDown, ChevronLeft, ChevronRight } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 const WEEKDAYS = ["一", "二", "三", "四", "五", "六", "日"];
 const pad = (n: number) => String(n).padStart(2, "0");
+
+// 自定义时间下拉：用纯 div/button 实现，避免原生 <select> 在 WebView2 暗夜模式下
+// 弹出列表强制白底（OS 绘制，CSS color-scheme 不可靠）导致文字看不清。
+function TimeSelect({
+  value,
+  count,
+  onChange,
+}: {
+  value: number;
+  count: number;
+  onChange: (next: number) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const rootRef = useRef<HTMLDivElement>(null);
+  const listRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    // 打开时将当前选中项滚动到可视区域中部
+    const active = listRef.current?.querySelector<HTMLElement>(".is-active");
+    active?.scrollIntoView({ block: "center" });
+    function onDocPointerDown(event: MouseEvent) {
+      if (!rootRef.current?.contains(event.target as Node)) setOpen(false);
+    }
+    document.addEventListener("mousedown", onDocPointerDown);
+    return () => document.removeEventListener("mousedown", onDocPointerDown);
+  }, [open]);
+
+  return (
+    <div ref={rootRef} className={`panel-time-select${open ? " is-open" : ""}`}>
+      <button
+        type="button"
+        className="panel-time-select-trigger"
+        onClick={(event) => {
+          event.stopPropagation();
+          setOpen((v) => !v);
+        }}
+      >
+        <span>{pad(value)}</span>
+        <ChevronDown size={12} />
+      </button>
+      {open ? (
+        <div ref={listRef} className="panel-time-select-list">
+          {Array.from({ length: count }, (_, i) => (
+            <button
+              type="button"
+              key={i}
+              className={`panel-time-select-option${i === value ? " is-active" : ""}`}
+              onClick={(event) => {
+                event.stopPropagation();
+                onChange(i);
+                setOpen(false);
+              }}
+            >
+              {pad(i)}
+            </button>
+          ))}
+        </div>
+      ) : null}
+    </div>
+  );
+}
 
 function localValueFromDate(d: Date, includeTime: boolean): string {
   const date = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
@@ -144,23 +206,17 @@ export function PanelDateField({
 
           {includeTime ? (
             <div className="panel-date-time-row">
-              <select
+              <TimeSelect
                 value={hour}
-                onChange={(e) => commitTime(Number(e.target.value), minute)}
-              >
-                {Array.from({ length: 24 }, (_, i) => (
-                  <option key={i} value={i}>{pad(i)}</option>
-                ))}
-              </select>
+                count={24}
+                onChange={(next) => commitTime(next, minute)}
+              />
               <span>:</span>
-              <select
+              <TimeSelect
                 value={minute}
-                onChange={(e) => commitTime(hour, Number(e.target.value))}
-              >
-                {Array.from({ length: 60 }, (_, i) => (
-                  <option key={i} value={i}>{pad(i)}</option>
-                ))}
-              </select>
+                count={60}
+                onChange={(next) => commitTime(hour, next)}
+              />
             </div>
           ) : null}
 

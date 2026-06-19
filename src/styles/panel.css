@@ -1328,9 +1328,20 @@
   margin-top: 9px;
 }
 
-.panel-date-time-row select {
+/* 自定义时间下拉（替代原生 select，保证暗夜模式弹出列表可控） */
+.panel-time-select {
+  position: relative;
   width: 58px;
+}
+
+.panel-time-select-trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 2px;
+  width: 100%;
   height: 30px;
+  padding: 0 8px;
   border: 1px solid rgba(57, 190, 172, 0.24);
   border-radius: 10px;
   background: rgba(246, 255, 252, 0.95);
@@ -1338,7 +1349,52 @@
   font: inherit;
   font-size: 12px;
   font-weight: 700;
+  cursor: pointer;
   outline: none;
+}
+
+.panel-time-select-trigger svg {
+  opacity: 0.6;
+  flex-shrink: 0;
+}
+
+.panel-time-select-list {
+  position: absolute;
+  z-index: 30;
+  top: calc(100% + 4px);
+  left: 0;
+  width: 100%;
+  max-height: 168px;
+  overflow-y: auto;
+  padding: 4px;
+  border: 1px solid rgba(57, 190, 172, 0.24);
+  border-radius: 10px;
+  background: #ffffff;
+  box-shadow: 0 8px 20px rgba(11, 80, 72, 0.18);
+}
+
+.panel-time-select-option {
+  display: block;
+  width: 100%;
+  padding: 5px 8px;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--ti-text);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  text-align: center;
+  cursor: pointer;
+}
+
+.panel-time-select-option:hover {
+  background: var(--ti-accent-soft);
+}
+
+.panel-time-select-option.is-active {
+  background: var(--ti-accent);
+  color: #fff;
 }
 
 .panel-date-footer {
@@ -1374,6 +1430,7 @@
 
 .panel-surface-dark .panel-date-shell:hover,
 .panel-surface-dark .panel-date-shell.is-open {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.14), rgba(255, 255, 255, 0.08));
   border-color: var(--ti-accent-ring);
   box-shadow:
     0 0 0 3px rgba(91, 220, 200, 0.13),
@@ -1381,19 +1438,39 @@
 }
 
 .panel-surface-dark .panel-date-popover {
-  background: rgba(24, 34, 38, 0.98);
-  border-color: rgba(91, 220, 200, 0.18);
+  background: #182830 !important;
+  border-color: rgba(91, 220, 200, 0.22) !important;
+  color: rgba(238, 255, 251, 0.94) !important;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.55) !important;
+}
+
+.panel-surface-dark .panel-date-day {
   color: rgba(238, 255, 251, 0.94);
 }
 
-.panel-surface-dark .panel-date-day,
-.panel-surface-dark .panel-date-time-row select {
+.panel-surface-dark .panel-time-select-trigger {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(91, 220, 200, 0.25);
   color: rgba(238, 255, 251, 0.94);
 }
 
-.panel-surface-dark .panel-date-time-row select {
-  background: rgba(255, 255, 255, 0.08);
-  border-color: rgba(91, 220, 200, 0.18);
+.panel-surface-dark .panel-time-select-list {
+  background: #182830;
+  border-color: rgba(91, 220, 200, 0.25);
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.55);
+}
+
+.panel-surface-dark .panel-time-select-option {
+  color: rgba(238, 255, 251, 0.94);
+}
+
+.panel-surface-dark .panel-time-select-option:hover {
+  background: rgba(91, 220, 200, 0.16);
+}
+
+.panel-surface-dark .panel-time-select-option.is-active {
+  background: var(--ti-accent);
+  color: #06231f;
 }
 
 /* 详情：项目/标签/预估 */
