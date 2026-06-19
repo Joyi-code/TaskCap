@@ -16,6 +16,8 @@ tauri-dev*.log
 
 *.md
 !README.md
+!RELEASE_NOTES.md
+!CHANGELOG.md
 
 .env
 .env.*
