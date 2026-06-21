@@ -1276,7 +1276,7 @@
 .panel-date-weekdays,
 .panel-date-grid {
   display: grid;
-  grid-template-columns: repeat(7, 1fr);
+  grid-template-columns: repeat(7, minmax(0, 1fr));
   gap: 4px;
 }
 
@@ -1294,7 +1294,10 @@
 .panel-date-day {
   display: grid;
   place-items: center;
+  width: 100%;
+  min-width: 0;
   height: 26px;
+  padding: 0;
   border: 0;
   border-radius: 9px;
   background: transparent;
@@ -1760,6 +1763,11 @@
 
 .panel-history-dates .panel-date-popover {
   width: 190px;
+}
+
+.panel-history-dates > .panel-date-control:last-of-type .panel-date-popover {
+  right: 0;
+  left: auto;
 }
 
 .panel-history-dates-sep {
