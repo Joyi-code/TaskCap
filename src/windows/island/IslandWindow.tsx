@@ -902,8 +902,6 @@ export function IslandWindow() {
             )}
           </div>
 
-          <div className="island-expanded-divider" />
-
           <div className="island-expanded-actions">
             <button
               type="button"

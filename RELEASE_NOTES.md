@@ -19,6 +19,9 @@
 
 - 日期时间选择器全面重写，时 / 分下拉改为自定义组件，修复暗夜模式下下拉列表白底白字看不清的问题。
 - 自然语言时间解析支持 `9点45` 等格式，修正时区解析。
+- 未指定预计时长的任务自动采用设置页默认专注时长；通过 `/30m`、`/2h` 等语法设置的任务时长优先。
+- 优化浅色模式展开任务明细的边界层次，移除任务列表与快捷操作区之间的竖向分隔线。
+- 修复暗夜模式快速新增窗口输入文字对比度不足，并精简任务面板与历史界面的搜索提示。
 
 ## 安装
 
@@ -46,6 +49,6 @@ MIT License，详见 [LICENSE](LICENSE)。
 
 First public release of **TaskCap**, a lightweight Windows desktop task manager featuring a floating dynamic island, reminders, focus timer and quick-add. Built with Tauri + React + TypeScript + Rust, adapted for Windows from [howardrock88/TaskIsland](https://github.com/howardrock88/TaskIsland).
 
-**Highlights:** rewritten date/time picker (custom hour/minute dropdown fixes unreadable white-on-white list in dark mode), natural-language time parsing (`9点45`) and timezone fix.
+**Highlights:** rewritten date/time picker, natural-language time parsing (`9点45`), timezone fixes, default focus duration fallback, and improved light/dark interface contrast.
 
 **Install:** download `TaskCap_0.1.0_x64-setup.exe` (Windows 10/11 x64, requires WebView2). Licensed under MIT.

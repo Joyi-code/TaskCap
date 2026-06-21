@@ -3,6 +3,7 @@ import { CalendarDays, Check, ChevronDown, ChevronUp, Play, Sunrise, Sun, Trash2
 import { useEffect, useState } from "react";
 import { formatDueLabel, PRIORITY_LABEL, TaskDetail } from "./panelTypes";
 import { PanelDateField } from "./PanelDateField";
+import { readPanelSettings } from "./usePanelSettings";
 
 type Props = {
   task: TaskDetail;
@@ -168,6 +169,7 @@ function formatCompactDate(iso: string): string {
  * 详情区作为任务行（flex-wrap）的整宽子项独占一行，避免被右侧按钮列挤压留白。
  */
 export function TaskRow({ task, busy, expanded, onToggleExpand, onChanged, onCompleted }: Props) {
+  const defaultFocusMinutes = readPanelSettings().defaultFocusMinutes;
   const [titleDraft, setTitleDraft] = useState(task.title);
   const [notesDraft, setNotesDraft] = useState(task.notes);
   const [dueDraft, setDueDraft] = useState(toLocalInput(task.dueAt));
@@ -391,7 +393,7 @@ export function TaskRow({ task, busy, expanded, onToggleExpand, onChanged, onCom
                 type="number"
                 min={1}
                 step={5}
-                placeholder="25"
+                placeholder={String(defaultFocusMinutes)}
                 value={estimatedDraft}
                 onChange={(e) => setEstimatedDraft(e.target.value)}
                 onBlur={saveEstimatedMinutes}

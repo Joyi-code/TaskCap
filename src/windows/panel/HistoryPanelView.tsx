@@ -51,7 +51,7 @@ export function HistoryPanelView() {
         <Search size={14} className="panel-search-icon" />
         <input
           className="panel-search-input"
-          placeholder="搜索标题、备注、标签、项目"
+          placeholder="搜索标题、备注、标签"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
         />

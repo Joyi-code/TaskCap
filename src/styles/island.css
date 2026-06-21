@@ -41,10 +41,6 @@
   color: rgba(238, 242, 255, 0.62);
 }
 
-.island-shell.island-dark .island-expanded-divider {
-  background: rgba(255, 255, 255, 0.16);
-}
-
 .island-radius-collapsed {
   border-radius: 15px;
   clip-path: inset(0 round 15px);
@@ -278,6 +274,17 @@
   animation: island-preview-fade 0.18s ease;
 }
 
+/* 浅色玻璃上使用青灰描边，避免白色半透明边框融入背景 */
+.island-shell:not(.island-dark) .island-preview-row {
+  background: rgba(15, 47, 42, 0.055);
+  border-color: rgba(15, 47, 42, 0.22);
+}
+
+.island-shell:not(.island-dark) .island-preview-row.is-current {
+  background: rgba(15, 47, 42, 0.09);
+  border-color: rgba(59, 158, 255, 0.38);
+}
+
 .island-preview-row.is-current {
   background: rgba(255, 255, 255, 0.11);
   border-color: rgba(59, 158, 255, 0.24);
@@ -384,14 +391,6 @@
 .island-preview-action.is-done {
   background: rgba(59, 158, 255, 0.28);
   color: #3b9eff;
-}
-
-.island-expanded-divider {
-  align-self: stretch;
-  width: 1px;
-  flex-shrink: 0;
-  background: rgba(255, 255, 255, 0.24);
-  margin: 6px 0;
 }
 
 .island-expanded-actions {

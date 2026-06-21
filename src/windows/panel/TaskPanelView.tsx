@@ -253,7 +253,7 @@ export function TaskPanelView({
         <Search size={14} className="panel-search-icon" />
         <input
           className="panel-search-input"
-          placeholder="搜索标题、备注、标签、项目"
+          placeholder="搜索标题、备注、标签"
           value={searchQuery}
           onChange={(e) => onSearchChange(e.target.value)}
         />
