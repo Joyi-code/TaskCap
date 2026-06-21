@@ -4,8 +4,6 @@ TaskCap 是一个面向 Windows 的轻量桌面任务夹应用，提供悬浮灵
 
 本项目基于 [howardrock88/TaskIsland](https://github.com/howardrock88/TaskIsland) 的开源项目思路做 Windows 系统适配，**感谢原作者 howardrock88 的开源工作**。原项目为 macOS 原生应用，本项目将其核心交互逻辑移植到 Windows 平台，技术栈全面替换为 Tauri + React + TypeScript + Rust，并加入 Windows 专属适配。
 
-郑重声明：本项目不是 TaskIsland 官方产品。
-
 ## About
 
 TaskCap: Windows desktop adaptation of howardrock88/TaskIsland, built with Tauri, React, TypeScript and Rust as a lightweight floating task manager.
@@ -34,9 +32,9 @@ TaskCap: Windows desktop adaptation of howardrock88/TaskIsland, built with Tauri
 - 任务提醒：截止到点、指定提醒时间、喝水和久坐提醒，统一排队展示，任务提醒优先插队。
 - 专注计时：单任务专注倒计时，支持暂停与停止。
 - 快速新增：全局快捷键（默认 `Ctrl+Alt+N`）呼出，支持自然语言解析时间和优先级。
-- 任务面板：按优先级分组，支持今日队列、标签、项目、截止时间和预计时长。
+- 任务面板：按优先级分组，支持今日队列、标签、截止时间和预计时长。
 - 系统托盘：开机自启、最小化到托盘，主面板默认不进入任务栏。
-- 数据本地化：任务和配置全部存储在本地 SQLite，无云同步。
+- **数据本地化：任务和配置全部存储在本地 SQLite，无云同步**。
 
 ## 与原项目的关系
 
@@ -80,8 +78,6 @@ TaskCap: Windows desktop adaptation of howardrock88/TaskIsland, built with Tauri
 | 10:30 / 10：30 | 10:30 |
 | 9点半 | 09:30 |
 | 下午3点 / 晚上8点 | 15:00 / 20:00 |
-| 明早 / 早上 | 09:00 |
-| 今晚 / 晚上（无数字） | 20:00 |
 
 不写上午/下午时，一律按上午（24 小时制 < 12）处理。需要下午请明确写"下午"或"晚上"。
 
@@ -91,7 +87,7 @@ TaskCap: Windows desktop adaptation of howardrock88/TaskIsland, built with Tauri
 
 **标签与项目**
 
-`#标签名` 打标签，`+项目名` 归入项目，`/30m` 或 `/2h` 设置预计时长。
+`#标签名` 打标签，`/30m` 或 `/2h` 设置预计时长。
 
 **专注时长**
 
@@ -105,8 +101,8 @@ TaskCap: Windows desktop adaptation of howardrock88/TaskIsland, built with Tauri
 
 灵动岛显示三个数字，分别对应高 / 中 / 低优先级未完成任务数量。
 
-- **有今日队列任务时**：只统计今日队列中的任务
-- **今日队列为空时**：统计全部未完成任务
+- **有今日队列任务时**：**只统计今日队列中的任务**
+- **今日队列为空时**：**统计全部未完成任务**
 
 因此，当你手动将一条任务加入今日队列后，灵动岛数字会从"全部任务统计"切换为"今日队列统计"，数字可能变小，属于正常行为。
 
@@ -114,13 +110,31 @@ TaskCap: Windows desktop adaptation of howardrock88/TaskIsland, built with Tauri
 
 ### 今日队列
 
-任务的截止日期设为今天，**不会**自动进入今日队列。需要在任务面板中手动点击"加入今日"，任务才会出现在今日队列并影响灵动岛计数。
+任务的截止日期设为今天，**不会**自动进入今日队列。需要在任务面板中手动点击"**加入今日**"，任务才会出现在今日队列并影响灵动岛计数。
 
 ---
 
 ### 提醒优先级
 
-任务截止提醒优先级高于喝水 / 久坐提醒。若灵动岛正在显示喝水提醒，任务到点后会立即插队显示。任务提醒 60 秒后自动消失；喝水 / 久坐提醒不自动消失，需手动点击关闭。
+**任务截止提醒优先级高于喝水 / 久坐提醒。**若灵动岛正在显示喝水提醒，任务到点后会立即插队显示。任务提醒 60 秒后自动消失；喝水 / 久坐提醒不自动消失，需手动点击关闭。
+
+---
+
+### 设置页面
+
+点击主面板右上角的设置按钮进入设置页面，主要选项如下：
+
+| 设置项 | 说明 |
+| --- | --- |
+| 显示 | 控制灵动岛、菜单栏标题和暗夜模式。 |
+| 灵动岛 | 调整顶部间距和界面透明度。 |
+| 开机自启 | 控制登录 Windows 后是否自动启动 TaskCap。 |
+| 提醒 | 分别启用喝水、久坐提醒，并设置 1 至 120 分钟的提醒间隔。 |
+| 显示模式 | 设置提醒弹出时使用标准宽度 172px 或宽大模式 340px。 |
+| 专注 | 设置 5 至 120 分钟的默认专注时长；任务单独设置的时长优先。 |
+| 快捷键 | 点击当前组合键即可修改快速新增快捷键，按 Esc 取消录制。 |
+| 数据 | 控制主面板后台预加载，并设置 15 至 300 秒的自动刷新间隔。 |
+| 操作 | 支持刷新数据，导出 JSON、Markdown、CSV，导入 JSON 或 CSV。 |
 
 ---
 
@@ -128,7 +142,7 @@ TaskCap: Windows desktop adaptation of howardrock88/TaskIsland, built with Tauri
 
 从 GitHub Releases 下载 `TaskCap_x.x.x_x64-setup.exe` 后直接运行安装即可。
 
-安装时若 360 安全卫士或 Windows Defender 弹出拦截提示，选择"信任"或"允许本次运行"。本软件无云同步、无网络请求，所有数据仅存储在本地。
+安装时若 360 安全卫士或 Windows Defender 弹出拦截提示，选择"信任"或"允许本次运行"。**本软件无云同步、无网络请求，所有数据仅存储在本地。**
 
 ## 安装与开发
 
@@ -255,4 +269,4 @@ Rust 后端依赖：
 
 ## 免责声明
 
-本项目仅用于学习和研究目的。TaskIsland 原版产品功能和交互设计版权归原作者所有。本项目仅做平台移植，不用于商业用途。
+本项目仅用于学习和研究目的。原版产品功能和交互设计版权归原作者所有。本项目仅做平台移植，不用于商业用途。
