@@ -114,10 +114,9 @@ pub fn parse(
     if let Some(r) = repeat_result.range {
         metadata_ranges.push(r);
     }
-    for (start, end) in non_overlapping_ranges(metadata_ranges)
-        .into_iter()
-        .rev()
-    {
+    let mut metadata_ranges = non_overlapping_ranges(metadata_ranges);
+    metadata_ranges.sort_unstable_by_key(|(start, _)| *start);
+    for (start, end) in metadata_ranges.into_iter().rev() {
         working = remove_range(start, end, &working);
     }
 
@@ -499,6 +498,18 @@ mod tests {
         assert_eq!(parsed.estimated_minutes, Some(30));
         let due_local = parsed.due_at.unwrap().with_timezone(&Local);
         assert_eq!(due_local.day(), 2);
+        assert_eq!(due_local.hour(), 10);
+        assert_eq!(due_local.minute(), 0);
+    }
+
+    #[test]
+    fn parses_daily_time_before_chinese_title_without_panicking() {
+        let now = Utc.with_ymd_and_hms(2026, 6, 1, 0, 0, 0).unwrap();
+        let parsed = parse("每天10点写日报", TaskPriority::Medium, now);
+
+        assert_eq!(parsed.title, "写日报");
+        assert_eq!(parsed.repeat_rule, Some(TaskRepeatRule::Daily));
+        let due_local = parsed.due_at.unwrap().with_timezone(&Local);
         assert_eq!(due_local.hour(), 10);
         assert_eq!(due_local.minute(), 0);
     }

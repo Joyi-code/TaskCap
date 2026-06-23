@@ -1,3 +1,39 @@
+# TaskCap v0.1.1
+
+本版本修复快速新增任务时可能触发的自然语言解析崩溃问题，并完成 Windows 安装实机验证。
+
+## 修复内容
+
+- 修复输入 `每天10点写日报` 一类内容时，日期、时间和重复规则元数据删除顺序错误导致 UTF-8 中文字符边界 panic 和应用退出的问题。
+- 元数据区间按原始位置排序，再从右向左删除，避免删除左侧内容后继续使用失效的字节位置。
+- 新增 `parses_daily_time_before_chinese_title_without_panicking` 回归测试，确认标题解析为 `写日报`、重复规则为 `Daily`、提醒时间为 `10:00`。
+
+## 验证结果
+
+- `npm run verify` 通过。
+- Rust 测试 11 passed，0 failed。
+- 前端生产构建通过。
+- 安装包 FileVersion 和 ProductVersion 均为 `0.1.1`。
+- Windows 安装及核心功能实机测试通过。
+
+## 安装
+
+1. 下载 `TaskCap_0.1.1_x64-setup.exe`。
+2. 双击运行安装，支持 Windows 10 / 11 x64。
+3. 升级安装会继续使用当前用户已有的本地任务数据库和配置。
+
+## 下载文件说明
+
+- `TaskCap_0.1.1_x64-setup.exe`：Windows NSIS 安装包。
+- SHA256：`6367B55EB78912D47489BA6A8DD46EFD6300591AD6EE088C30E7E3724B23C979`。
+- `Source code (zip)` / `Source code (tar.gz)`：GitHub 基于 `v0.1.1` 标签自动生成的源码归档。
+
+## 兼容性说明
+
+部分将 Windows Terminal 设置为默认终端的环境，在 TaskCap 查询开机自启注册表时可能短暂显示 `reg.exe` 终端窗口。该问题不影响任务数据和主要功能，后续版本继续处理。
+
+---
+
 # TaskCap v0.1.0
 
 首个公开发布版本。TaskCap 是一个面向 Windows 的轻量桌面任务夹应用，提供悬浮灵动岛、任务提醒、专注计时和快速新增能力。
