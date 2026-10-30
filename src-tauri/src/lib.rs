@@ -341,6 +341,32 @@ fn save_panel_position(state: State<'_, AppState>, x: i32, y: i32) -> Result<(),
     config::save_config(&config)
 }
 
+/// 主面板允许的最小逻辑尺寸，防止拖到完全不可用
+const PANEL_MIN_WIDTH: f64 = 380.0;
+const PANEL_MIN_HEIGHT: f64 = 480.0;
+
+/// 持久化主面板尺寸（逻辑像素）
+fn persist_panel_size(app: &AppHandle, width: f64, height: f64) {
+    let state = app.state::<AppState>();
+    let Ok(mut config) = state.config.lock() else {
+        return;
+    };
+    config.panel_size_w = Some(width.max(PANEL_MIN_WIDTH));
+    config.panel_size_h = Some(height.max(PANEL_MIN_HEIGHT));
+    let _ = config::save_config(&config);
+}
+
+/// 拖边结束后由前端调用，下次打开（含失焦隐藏后再开）记住尺寸
+#[tauri::command]
+fn save_panel_size(state: State<'_, AppState>, width: f64, height: f64) -> Result<(), String> {
+    let w = width.max(PANEL_MIN_WIDTH);
+    let h = height.max(PANEL_MIN_HEIGHT);
+    let mut config = state.config.lock().map_err(|e| e.to_string())?;
+    config.panel_size_w = Some(w);
+    config.panel_size_h = Some(h);
+    config::save_config(&config)
+}
+
 #[tauri::command]
 fn postpone_panel_preload(millis: Option<u64>) -> Result<(), String> {
     postpone_panel_preload_millis(millis.unwrap_or(10_000).clamp(1_000, 60_000));
@@ -777,7 +803,8 @@ fn ensure_panel_window(app: &AppHandle) -> Result<WebviewWindow, String> {
     let win = WebviewWindowBuilder::new(app, "panel", WebviewUrl::App("index.html".into()))
         .title("TaskCap")
         .inner_size(430.0, 590.0)
-        .resizable(false)
+        .min_inner_size(PANEL_MIN_WIDTH, PANEL_MIN_HEIGHT)
+        .resizable(true)
         .decorations(false)
         .transparent(true)
         .shadow(false)
@@ -786,6 +813,18 @@ fn ensure_panel_window(app: &AppHandle) -> Result<WebviewWindow, String> {
         .build()
         .map_err(|e| e.to_string())?;
     let _ = win.set_background_color(Some(tauri::webview::Color(0, 0, 0, 0)));
+    // 首次创建（后台预载）即恢复上次拉伸的尺寸；未记录过则保持 430x590
+    {
+        let state = app.state::<AppState>();
+        let Ok(config) = state.config.lock() else {
+            return Ok(win);
+        };
+        if let Some((w, h)) = config.panel_size_w.zip(config.panel_size_h) {
+            let scale = win.scale_factor().unwrap_or(1.0);
+            let phys = LogicalSize::new(w, h).to_physical::<u32>(scale);
+            let _ = win.set_size(Size::Physical(phys));
+        }
+    }
     Ok(win)
 }
 
@@ -897,9 +936,17 @@ fn start_panel_background_preload(app: AppHandle) {
 fn toggle_panel_window_on_main(app: &AppHandle) -> Result<(), String> {
     let panel = ensure_panel_window(app)?;
     if panel.is_visible().map_err(|e| e.to_string())? {
-        // 关闭前记一次当前位置，双保险（前端拖动已实时保存）
+        // 关闭前记一次当前位置（前端拖动已实时保存，此处为双保险）
         if let Ok(pos) = panel.outer_position() {
             persist_panel_position(app, pos.x, pos.y);
+        }
+        // 关闭前记住当前尺寸（前端 resize 监听已实时保存，此处为双保险）
+        if let (Ok(sz), Ok(scale)) = (panel.outer_size(), panel.scale_factor()) {
+            let w = sz.width as f64 / scale;
+            let h = sz.height as f64 / scale;
+            if w > 0.0 && h > 0.0 {
+                persist_panel_size(app, w, h);
+            }
         }
         panel.hide().map_err(|e| e.to_string())?;
     } else {
@@ -1226,6 +1273,7 @@ pub fn run() {
             quickadd_frontend_ready,
             save_island_position,
             save_panel_position,
+            save_panel_size,
             resize_island_window,
             postpone_panel_preload,
             island_ready,

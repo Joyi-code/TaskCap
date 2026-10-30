@@ -58,6 +58,12 @@ pub struct AppConfig {
     /// 主面板上次所在的物理 Y 坐标
     #[serde(default)]
     pub panel_pos_y: Option<i32>,
+    /// 主面板上次打开时的逻辑宽度（用户拖边拉伸后记忆）
+    #[serde(default)]
+    pub panel_size_w: Option<f64>,
+    /// 主面板上次打开时的逻辑高度（用户拖边拉伸后记忆）
+    #[serde(default)]
+    pub panel_size_h: Option<f64>,
     /// 任务岛全局界面透明度 0–50：0=不透明，50=最透（悬浮岛+面板+快速新增）
     #[serde(default = "default_capsule_transparency_percent")]
     pub capsule_transparency_percent: u8,
@@ -85,6 +91,8 @@ impl Default for AppConfig {
             island_offset_y: default_island_offset_y(),
             panel_pos_x: None,
             panel_pos_y: None,
+            panel_size_w: None,
+            panel_size_h: None,
             capsule_transparency_percent: default_capsule_transparency_percent(),
             quick_add_shortcut: default_quick_add_shortcut(),
             display_mode: default_display_mode(),

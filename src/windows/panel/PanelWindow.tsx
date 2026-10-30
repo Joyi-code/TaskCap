@@ -5,6 +5,7 @@ import { History, Pin, Settings, Undo2, X } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { resolveAppGlassStyle } from "../../lib/appGlassStyle";
 import { createPointerDragTracker } from "../../lib/windowDrag";
+import { PanelResizeHandles } from "./PanelResizeHandles";
 import { setWindowAlwaysOnTop } from "../../lib/windowZOrder";
 import "../../styles/glass.css";
 import "../../styles/panel.css";
@@ -174,6 +175,32 @@ export function PanelWindow() {
     }
   };
 
+  // 拖边缩放结束后记忆面板尺寸（resize 事件连发，停止 300ms 后才保存）
+  useEffect(() => {
+    if (!snapshotLoaded) return;
+    const win = getCurrentWindow();
+    let timer: ReturnType<typeof setTimeout> | null = null;
+    let lastW = -1;
+    let lastH = -1;
+    const unlisten = win.onResized(() => {
+      // 用布局像素（逻辑尺寸）记录，多 DPI 屏之间也稳定
+      const w = document.documentElement.clientWidth;
+      const h = document.documentElement.clientHeight;
+      if (w === lastW && h === lastH) return;
+      lastW = w;
+      lastH = h;
+      timer && clearTimeout(timer);
+      timer = setTimeout(() => {
+        void invoke("save_panel_size", { width: w, height: h })
+          .catch(console.error);
+      }, 300);
+    });
+    return () => {
+      timer && clearTimeout(timer);
+      void unlisten.then((off) => off());
+    };
+  }, [snapshotLoaded]);
+
   useEffect(() => {
     document.documentElement.classList.add("panel-root");
     return () => document.documentElement.classList.remove("panel-root");
@@ -312,6 +339,8 @@ export function PanelWindow() {
           />
         </div>
       </section>
+      {/* 四周一圈的透明拖拽缩放热区（边 + 角） */}
+      <PanelResizeHandles />
     </div>
   );
 }

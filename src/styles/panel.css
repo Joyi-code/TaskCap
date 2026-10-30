@@ -58,6 +58,7 @@
 }
 
 .panel-shell {
+  position: relative;
   display: flex;
   flex-direction: column;
   width: 100%;
@@ -65,6 +66,85 @@
   border-radius: 18px;
   color: var(--ti-text);
   overflow: hidden;
+}
+
+/* ===========================================================================
+   四周拖拽缩放热区：透明边条 + 角块，按下即交给系统原生缩放
+   =========================================================================== */
+.panel-resize-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 2000;
+  pointer-events: none;
+}
+
+.panel-resize-layer > .panel-resize-handle {
+  position: absolute;
+  pointer-events: auto;
+}
+
+.panel-resize-n {
+  top: 0;
+  left: 12px;
+  right: 12px;
+  height: 6px;
+  cursor: ns-resize;
+}
+
+.panel-resize-s {
+  bottom: 0;
+  left: 12px;
+  right: 12px;
+  height: 6px;
+  cursor: ns-resize;
+}
+
+.panel-resize-w {
+  left: 0;
+  top: 12px;
+  bottom: 12px;
+  width: 6px;
+  cursor: ew-resize;
+}
+
+.panel-resize-e {
+  right: 0;
+  top: 12px;
+  bottom: 12px;
+  width: 6px;
+  cursor: ew-resize;
+}
+
+.panel-resize-nw {
+  top: 0;
+  left: 0;
+  width: 14px;
+  height: 14px;
+  cursor: nwse-resize;
+}
+
+.panel-resize-ne {
+  top: 0;
+  right: 0;
+  width: 14px;
+  height: 14px;
+  cursor: nesw-resize;
+}
+
+.panel-resize-sw {
+  bottom: 0;
+  left: 0;
+  width: 14px;
+  height: 14px;
+  cursor: nesw-resize;
+}
+
+.panel-resize-se {
+  bottom: 0;
+  right: 0;
+  width: 14px;
+  height: 14px;
+  cursor: nwse-resize;
 }
 
 /* 默认实心：青绿玻璃渐变 + 内高光，不依赖透出桌面也有玻璃拟态观感 */
