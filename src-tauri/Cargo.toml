@@ -1,6 +1,6 @@
 [package]
 name = "taskcap"
-version = "0.1.1"
+version = "0.2.0"
 description = "TaskCap - floating task manager for Windows"
 authors = ["TaskCap"]
 license = "MIT"
@@ -10,6 +10,10 @@ rust-version = "1.77.2"
 [lib]
 name = "taskcap_lib"
 crate-type = ["staticlib", "cdylib", "rlib"]
+
+[features]
+# 生产构建必须启用：把前端资源内嵌进 exe；不启用会按开发模式去连 devUrl
+custom-protocol = ["tauri/custom-protocol"]
 
 [build-dependencies]
 tauri-build = { version = "2.6.2", features = [] }
@@ -29,6 +33,7 @@ tauri-plugin-notification = "2"
 tauri-plugin-dialog = "2"
 regex = "1"
 url = "2"
+ureq = { version = "2", default-features = false, features = ["json", "tls"] }
 
 [dev-dependencies]
 tempfile = "3"

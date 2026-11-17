@@ -58,3 +58,21 @@ demo-loading.html
 
 # 本地启动验证截图输出目录
 verify-startup/
+
+# 飞书同步本地凭证与状态（个人数据，不入库）
+feishu.json
+feishu-sync.json
+.feishu-config.json
+.feishu-users.json
+scripts/feishu/*.local.json
+
+# 本地任务数据与导出文件（绝不入库）
+*.db
+*.sqlite
+*.sqlite3
+taskcap-export.*
+exports/
+
+# Python 缓存（飞书辅助脚本）
+__pycache__/
+*.pyc

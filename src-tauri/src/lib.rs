@@ -1,6 +1,7 @@
 mod config;
 mod db;
 mod deeplink;
+mod feishu;
 mod models;
 mod panel;
 mod parser;
@@ -92,6 +93,8 @@ pub(crate) struct AppState {
     config: Mutex<AppConfig>,
     reminders: ReminderState,
     marked_complete: Mutex<HashSet<Uuid>>,
+    /// 飞书同步运行期状态（是否同步中、最近错误）
+    feishu: feishu::FeishuRuntime,
 }
 
 fn should_show_capsule(app: &AppHandle) -> bool {
@@ -199,6 +202,16 @@ fn refresh_system_ui(app: &AppHandle) -> Result<(), String> {
 
 /// 广播任务变更并刷新托盘/悬浮岛。调用前必须已释放 `store` 锁，否则会死锁。
 fn notify_tasks_changed(app: &AppHandle) -> Result<(), String> {
+    // 本地有改动：让飞书同步在冷却后尽快补推一次。
+    // 同步过程自身触发的通知不标记，避免刚同步完又立刻跑一轮。
+    let syncing = app
+        .state::<AppState>()
+        .feishu
+        .syncing
+        .load(Ordering::SeqCst);
+    if !syncing {
+        feishu::request_sync_soon();
+    }
     app.emit("tasks-changed", ())
         .map_err(|e| e.to_string())?;
     refresh_system_ui(app)
@@ -434,6 +447,47 @@ fn import_tasks_from_path(
 fn get_task_counts(state: State<'_, AppState>) -> Result<TaskCounts, String> {
     let store = state.store.lock().map_err(|e| e.to_string())?;
     Ok(store.task_counts())
+}
+
+#[tauri::command]
+fn feishu_get_state(app: AppHandle) -> Result<feishu::FeishuState, String> {
+    Ok(feishu::state(&app))
+}
+
+#[tauri::command]
+fn feishu_save_config(
+    app: AppHandle,
+    patch: feishu::FeishuConfigPatch,
+) -> Result<feishu::FeishuState, String> {
+    feishu::save_patch(patch)?;
+    Ok(feishu::state(&app))
+}
+
+/// 手动同步：放到阻塞线程池执行，避免卡住 UI 线程
+#[tauri::command]
+async fn feishu_sync_now(app: AppHandle) -> Result<feishu::FeishuSyncReport, String> {
+    tauri::async_runtime::spawn_blocking(move || feishu::sync_now(&app))
+        .await
+        .map_err(|e| e.to_string())?
+}
+
+/// 在用户自己的多维表格里创建/复用「TaskCap任务」表
+#[tauri::command]
+async fn feishu_create_table(
+    app: AppHandle,
+    app_token: String,
+) -> Result<feishu::FeishuTableOutcome, String> {
+    tauri::async_runtime::spawn_blocking(move || feishu::create_table(&app, &app_token))
+        .await
+        .map_err(|e| e.to_string())?
+}
+
+/// 连接自检：只读校验凭证与目标表，返回可读结论
+#[tauri::command]
+async fn feishu_test_connection() -> Result<feishu::FeishuConnectionInfo, String> {
+    tauri::async_runtime::spawn_blocking(feishu::test_connection)
+        .await
+        .map_err(|e| e.to_string())?
 }
 
 #[tauri::command]
@@ -1238,6 +1292,7 @@ pub fn run() {
             config: Mutex::new(app_config),
             reminders: ReminderState::new(),
             marked_complete: Mutex::new(HashSet::new()),
+            feishu: feishu::FeishuRuntime::new(),
         })
         .invoke_handler(tauri::generate_handler![
             get_app_config,
@@ -1279,6 +1334,11 @@ pub fn run() {
             island_ready,
             export_tasks_to_path,
             import_tasks_from_path,
+            feishu_get_state,
+            feishu_save_config,
+            feishu_sync_now,
+            feishu_create_table,
+            feishu_test_connection,
             quit_app,
             update_shortcut,
             apply_display_mode
@@ -1387,6 +1447,7 @@ pub fn run() {
             let _ = refresh_tray_ui(app.handle());
             let _ = handle_startup_deep_links(app.handle());
             reminder::start_reminder_loop(app.handle().clone());
+            feishu::start_auto_sync(app.handle().clone());
             Ok(())
         })
         .run(tauri::generate_context!())

@@ -134,7 +134,86 @@ TaskCap: Windows desktop adaptation of howardrock88/TaskIsland, built with Tauri
 | 专注 | 设置 5 至 120 分钟的默认专注时长；任务单独设置的时长优先。 |
 | 快捷键 | 点击当前组合键即可修改快速新增快捷键，按 Esc 取消录制。 |
 | 数据 | 控制主面板后台预加载，并设置 15 至 300 秒的自动刷新间隔。 |
+| 飞书同步（可选） | 默认关闭。开启并填入飞书应用凭证后，任务同步到飞书多维表格，飞书里勾选完成会回写本地。 |
 | 操作 | 支持刷新数据，导出 JSON、Markdown、CSV，导入 JSON 或 CSV。 |
+
+---
+
+### 飞书同步（可选）
+
+不用飞书的用户不需要做任何事：开关默认关闭，应用不联网、不上传数据。开启后才访问飞书开放平台 API。
+
+接入步骤：
+
+1. 在[飞书开放平台](https://open.feishu.cn/app)创建企业自建应用，在「权限管理」开通 `bitable:app`（多维表格读写），再在「版本管理与发布」创建版本并发布，审核通过后权限才生效。
+2. 在飞书里新建一个多维表格，右上角「⋯」→「添加文档应用」，把该应用添加为「可编辑」协作者。
+3. 打开 TaskCap 设置页 →「飞书同步（可选）」→ 打开开关，展开「连接配置」，填入 `App ID`、`App Secret`、`App Token`。
+4. 点「创建任务表」，应用会自动建好 `TaskCap任务` 表并回填 `Table ID`；也可手动粘贴已有表的 `Table ID`。
+5. 点「立即同步」。之后按设置的间隔自动同步（默认 15 分钟）。
+
+四个关键字段怎么填：
+
+| 字段 | 从哪里取 | 示例 | 注意 |
+| --- | --- | --- | --- |
+| App ID | 开放平台 → 应用 →「凭证与基础信息」 | `cli_a1b2c3d4e5f6` | `cli_` 开头，不是企业 ID |
+| App Secret | 同上「应用密钥」 | 长串字母数字 | 只存本机，界面不回显 |
+| App Token | 多维表格链接 `/base/` 或 `/wiki/` 之后 | `bascnAbCdEfGhIjKlMnOpQr` | 知识库链接里是节点 token，程序会自动换算 |
+| Table ID | 链接 `?table=` 之后，或点「创建任务表」生成 | `tblAbCdEfGhIjKlMn` | 留空可自动创建 |
+
+链接有两种形态，都能用：
+
+```text
+https://xxx.feishu.cn/base/bascnAbCdEfGhIjKlMnOpQr?table=tblAbCdEfGhIjKlMn&view=vewxxxx
+https://xxx.feishu.cn/wiki/bascnAbCdEfGhIjKlMnOpQr?table=tblAbCdEfGhIjKlMn&view=vewxxxx
+```
+
+`/base/` 或 `/wiki/` 后是 App Token，`?table=` 后是 Table ID。飞书客户端「分享 → 复制链接」给的是 `/wiki/` 形态；
+这种链接里的 token 是知识库节点 token，TaskCap 同步时会自动换成底层表格的真实 token，不用你手动处理。
+
+也可以直接把整条链接粘进设置页的「粘贴链接」，点「从链接解析」自动填两个值。
+
+常见报错：
+
+| 现象 | 原因 | 处理 |
+| --- | --- | --- |
+| 权限不足 / permission denied | 应用没加为表格协作者，或权限未开通/未发布 | 补第 1、2 步 |
+| app_id 或 app_secret 无效 | 凭证填错或应用已停用 | 重新复制凭证 |
+| 字段不存在（FieldNameNotFound） | Table ID 指到了别的表 | 清空 Table ID 后重新「创建任务表」 |
+| 同步成功但看不到数据 | App Token 或 Table ID 对不上 | 按上面链接示意核对两个值 |
+
+连接状态标识（设置页顶部）：
+
+| 颜色 | 含义 |
+| --- | --- |
+| 绿色「已连接」 | 最近一次同步或「测试连接」成功；下方明细显示表名、Table ID、字段数、上次同步时间 |
+| 黄色「未连接」 | 已启用但配置不全，或还没跑过首次同步 |
+| 红色「连接异常」 | 最近一次同步/自检失败，具体原因在状态下方 |
+| 灰色「未启用」 | 等同于完全离线，不发任何请求 |
+
+「测试连接」只做只读自检（取 token、解析知识库 token、确认表存在、读字段数），不会写入或改动数据。
+
+同步规则：
+
+| 方向 | 说明 |
+| --- | --- |
+| 本地 → 飞书 | 新增任务自动建记录，任务字段变化自动更新记录，已完成任务显示为「已完成」（历史存档）。 |
+| 飞书 → 本地 | 在飞书里把「状态」改成「已完成」，下次同步会把本地对应任务标记完成。 |
+
+说明与限制：
+
+- 飞书表字段：任务标题、本地ID、状态、优先级、项目、标签、截止日期、提醒时间、完成时间、创建时间、更新时间、预计分钟、专注分钟、推迟次数、子任务、备注、重复规则、今日清单、当前任务、同步时间。
+- 以「本地ID」为唯一键做增量更新，重复同步不会产生重复记录。
+- 本地删除任务不会删除飞书记录，避免误删；需要时在飞书里手动删除。
+- 在飞书里新建的记录没有「本地ID」，暂不回传本地。
+- 凭证只写入本机 `%APPDATA%\taskcap\feishu.json`，不进入仓库。
+
+命令行辅助脚本（可选，不影响应用内同步）：
+
+```powershell
+python scripts/feishu/create_table.py      # 在指定 base 里建表
+python scripts/feishu/verify.py            # 核对同步结果
+python scripts/feishu/seed_config.py       # 从本机已有凭证写入 feishu.json
+```
 
 ---
 
@@ -142,7 +221,7 @@ TaskCap: Windows desktop adaptation of howardrock88/TaskIsland, built with Tauri
 
 从 GitHub Releases 下载 `TaskCap_x.x.x_x64-setup.exe` 后直接运行安装即可。
 
-安装时若 360 安全卫士或 Windows Defender 弹出拦截提示，选择"信任"或"允许本次运行"。**本软件无云同步、无网络请求，所有数据仅存储在本地。**
+安装时若 360 安全卫士或 Windows Defender 弹出拦截提示，选择"信任"或"允许本次运行"。**应用默认无云同步、无网络请求，所有数据仅存储在本地。**只有你主动开启「飞书同步」并填入凭证后，才会访问飞书开放平台接口；关闭开关即恢复完全离线。
 
 ## 安装与开发
 
@@ -167,6 +246,8 @@ npm run tauri:check
 npm run tauri:build
 ```
 
+> 不要用裸 `cargo build --release` 代替：Tauri 2 只有在启用 `custom-protocol` 特性时才把前端资源内嵌进 exe，否则窗口会按开发模式去连 `http://127.0.0.1:5181` 并显示「拒绝连接」。项目已在 `Cargo.toml` 声明 `custom-protocol` 特性，等价命令是 `cargo build --release --features custom-protocol`。
+
 Tauri 打包目标当前配置为 NSIS 安装包，产物位于项目平级的 `.build\taskcap-target\release\bundle\nsis\` 目录。
 
 如果出现 `Visual Studio Build Tools not found`，请安装 Visual Studio Build Tools 2022，并确认已勾选 `Desktop development with C++` 组件。
@@ -176,8 +257,11 @@ Tauri 打包目标当前配置为 NSIS 安装包，产物位于项目平级的 `
 应用数据默认存储在：
 
 ```text
-%APPDATA%\taskcap\taskcap.db    # 任务数据库（SQLite）
-%APPDATA%\taskcap\config.json   # 应用配置
+%APPDATA%\taskcap\taskcap.db        # 任务数据库（SQLite）
+%APPDATA%\taskcap\config.json       # 应用配置
+%APPDATA%\taskcap\feishu.json       # 飞书同步配置（含应用凭证，仅开启时生成）
+%APPDATA%\taskcap\feishu-sync.json  # 飞书同步去重状态
+%APPDATA%\taskcap\feishu.log        # 飞书同步日志（便于排查）
 ```
 
 首次启动时，程序会自动创建目录、配置文件和 SQLite 数据库，无需手动初始化。安装包不包含开发者本机数据；同一台电脑升级或重新安装时，会继续读取该用户原有的数据。
@@ -198,13 +282,13 @@ taskcap/
 │   ├── main.tsx                 # 应用入口
 │   └── version.ts               # 版本号
 ├── src-tauri/                   # Tauri + Rust 后端
-│   ├── src/                     # Rust 源码
+│   ├── src/                     # Rust 源码（feishu.rs 为可选飞书同步）
 │   ├── icons/                   # 应用图标
 │   ├── capabilities/            # Tauri 权限配置
 │   ├── tauri.conf.json          # Tauri 配置
 │   └── Cargo.toml               # Rust 依赖
 ├── public/                      # 静态资源（图标、加载动画）
-├── scripts/                     # Windows 开发脚本
+├── scripts/                     # Windows 开发脚本（feishu/ 为飞书辅助脚本）
 ├── screenshots/                 # 产品截图
 ├── package.json                 # 前端依赖与脚本
 └── README.md                    # 项目说明
@@ -219,6 +303,7 @@ taskcap/
 - `src-tauri/target/` 和构建输出目录
 - `.env`, `.env.local`, `.env.*.local`
 - `*.log`, `*.err.log`, `*.out.log`
+- 飞书同步本地凭证与状态（`feishu.json`、`feishu-sync.json`、`scripts/feishu/*.local.json`）
 - 根目录开发截图和调试文件
 - 本地启动验证截图 `verify-startup/`
 - IDE 配置和系统临时文件
@@ -250,10 +335,19 @@ Rust 后端依赖：
 - rusqlite（bundled），本地 SQLite 存储
 - serde / serde_json
 - chrono / uuid / regex / log
+- ureq（仅飞书同步使用，默认关闭时不会发起请求）
 
 ## 更新日志
 
 完整发布记录见 GitHub Releases。
+
+### v0.2.0
+
+- 新增可选「飞书同步」：默认关闭，关闭时完全离线；开启后填写飞书应用凭证即可把任务同步到多维表格。
+- 支持双向同步：本地任务推送为飞书记录，飞书里勾选「已完成」回写本地；以本地 ID 增量更新，不产生重复记录。
+- 支持一键创建 `TaskCap任务` 表，无需手抄 Table ID；同步间隔 5 至 120 分钟可调。
+- 凭证只存本机 `%APPDATA%\taskcap\feishu.json`，不写入仓库、不内置任何租户信息。
+- 新增 5 项飞书字段映射与同步判定单元测试。
 
 ### v0.1.1
 

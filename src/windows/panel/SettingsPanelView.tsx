@@ -5,6 +5,7 @@ import { Bell, Database, Info, Keyboard, Layout, Monitor, Power, RefreshCw, Spar
 import { useCallback, useEffect, useRef, useState } from "react";
 import { MAX_UI_TRANSPARENCY_PERCENT } from "../../lib/appGlassStyle";
 import { APP_VERSION } from "../../version";
+import { FeishuSyncSection } from "./FeishuSyncSection";
 import { SettingSection } from "./SettingSection";
 import { SettingToggle } from "./SettingToggle";
 import { AppConfig } from "./useAppConfig";
@@ -328,6 +329,9 @@ export function SettingsPanelView({
           主面板 WebView 已挂载时生效（预加载开启，或您至少打开过一次主面板）。
         </p>
       </SettingSection>
+
+      {/* 飞书同步 */}
+      <FeishuSyncSection />
 
       {/* 操作 */}
       <SettingSection icon={<Database size={15} />} title="操作">

@@ -2483,3 +2483,204 @@ html.panel-dark .panel-view-tabs-scroll::-webkit-scrollbar-thumb {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.65; }
 }
+
+/* ---------------------------------------------------------------- 飞书同步 */
+
+.panel-setting-text-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin: 8px 0;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.panel-setting-text-row > span {
+  flex-shrink: 0;
+}
+
+.panel-setting-text-input {
+  flex: 1;
+  min-width: 0;
+  height: 30px;
+  padding: 0 10px;
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  border-radius: 8px;
+  background: var(--ti-input-bg);
+  color: inherit;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.panel-setting-text-input:focus {
+  outline: none;
+  border-color: var(--ti-accent);
+}
+
+.panel-surface-dark .panel-setting-text-input,
+html.panel-dark .panel-setting-text-input {
+  border-color: rgba(255, 255, 255, 0.14);
+}
+
+.panel-feishu-config {
+  margin-top: 8px;
+  padding-top: 4px;
+  border-top: 1px solid rgba(13, 84, 73, 0.12);
+}
+
+.panel-feishu-meta {
+  margin: 2px 0 4px;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.5;
+  opacity: 0.8;
+}
+
+.panel-feishu-meta.muted {
+  opacity: 0.55;
+}
+
+.panel-feishu-error {
+  margin: 2px 0 6px;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.5;
+  color: #c0392b;
+}
+
+.panel-surface-dark .panel-feishu-error,
+html.panel-dark .panel-feishu-error {
+  color: #ff9a8b;
+}
+
+.panel-capsule-btn:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
+.panel-feishu-hint {
+  margin: 2px 0 8px;
+  padding: 7px 10px;
+  border-radius: 8px;
+  background: rgba(255, 176, 46, 0.16);
+  border: 1px solid rgba(255, 176, 46, 0.4);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.5;
+}
+
+/* 飞书连接状态：绿=已连接，黄=待配置/待同步，红=异常，灰=未启用 */
+.panel-feishu-status-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 6px 0 8px;
+}
+
+.panel-feishu-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.panel-feishu-status i {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: currentColor;
+  box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.05);
+}
+
+.panel-feishu-status.is-ok {
+  color: #0f7b4f;
+  background: rgba(46, 196, 122, 0.16);
+  border-color: rgba(46, 196, 122, 0.45);
+}
+
+.panel-feishu-status.is-pending {
+  color: #8a6100;
+  background: rgba(255, 176, 46, 0.18);
+  border-color: rgba(255, 176, 46, 0.5);
+}
+
+.panel-feishu-status.is-error {
+  color: #b3261e;
+  background: rgba(235, 87, 87, 0.16);
+  border-color: rgba(235, 87, 87, 0.45);
+}
+
+.panel-feishu-status.is-off {
+  color: #5a6b6b;
+  background: rgba(120, 140, 140, 0.14);
+  border-color: rgba(120, 140, 140, 0.35);
+}
+
+.panel-surface-dark .panel-feishu-status.is-ok,
+html.panel-dark .panel-feishu-status.is-ok {
+  color: #6ee7a8;
+}
+
+.panel-surface-dark .panel-feishu-status.is-pending,
+html.panel-dark .panel-feishu-status.is-pending {
+  color: #ffd166;
+}
+
+.panel-surface-dark .panel-feishu-status.is-error,
+html.panel-dark .panel-feishu-status.is-error {
+  color: #ff9a8b;
+}
+
+.panel-surface-dark .panel-feishu-status.is-off,
+html.panel-dark .panel-feishu-status.is-off {
+  color: #a8b8b8;
+}
+
+.panel-feishu-detail {
+  margin: 6px 0 8px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: rgba(46, 196, 122, 0.1);
+  border: 1px solid rgba(46, 196, 122, 0.35);
+}
+
+.panel-feishu-detail-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  margin: 3px 0;
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.panel-feishu-detail-row span {
+  flex-shrink: 0;
+  opacity: 0.6;
+  font-weight: 600;
+}
+
+.panel-feishu-detail-row b {
+  font-weight: 700;
+  text-align: right;
+  word-break: break-all;
+}
+
+.panel-feishu-mono {
+  font-family: Consolas, "Courier New", monospace;
+  font-size: 10.5px;
+}
+
+.panel-surface-dark .panel-feishu-detail,
+html.panel-dark .panel-feishu-detail {
+  background: rgba(46, 196, 122, 0.12);
+  border-color: rgba(110, 231, 168, 0.4);
+}
