@@ -1,3 +1,12 @@
+// 生产构建保护：Tauri 只有启用 custom-protocol 时才把前端资源内嵌进 exe。
+// 缺这个特性时 `dev` 标记为真，窗口会去连 devUrl（127.0.0.1:5181），
+// 发到用户手里就是白屏。这里让 release 构建直接编译失败，杜绝误发。
+#[cfg(all(dev, not(debug_assertions)))]
+compile_error!(
+    "release 构建必须启用 custom-protocol 特性，否则程序会去连 127.0.0.1:5181 并白屏。\
+     请用 `npm run tauri:build`，或 cargo 命令加 `--features custom-protocol`。"
+);
+
 mod config;
 mod db;
 mod deeplink;
@@ -8,6 +17,7 @@ mod parser;
 mod reminder;
 mod store;
 mod tray_util;
+mod updater;
 
 use config::AppConfig;
 use models::TaskCounts;
@@ -95,6 +105,8 @@ pub(crate) struct AppState {
     marked_complete: Mutex<HashSet<Uuid>>,
     /// 飞书同步运行期状态（是否同步中、最近错误）
     feishu: feishu::FeishuRuntime,
+    /// 应用内更新运行期状态
+    updater: updater::UpdaterRuntime,
 }
 
 fn should_show_capsule(app: &AppHandle) -> bool {
@@ -230,6 +242,7 @@ struct AppConfigPatch {
     display_mode: Option<String>,
     panel_background_preload: Option<bool>,
     panel_refresh_interval_secs: Option<u32>,
+    auto_check_updates: Option<bool>,
 }
 
 #[tauri::command]
@@ -279,6 +292,9 @@ fn save_app_config(
     }
     if let Some(display_mode) = patch.display_mode {
         config.display_mode = display_mode;
+    }
+    if let Some(auto_check_updates) = patch.auto_check_updates {
+        config.auto_check_updates = auto_check_updates;
     }
     let mut trigger_panel_preload = false;
     if let Some(panel_background_preload) = patch.panel_background_preload {
@@ -488,6 +504,34 @@ async fn feishu_test_connection() -> Result<feishu::FeishuConnectionInfo, String
     tauri::async_runtime::spawn_blocking(feishu::test_connection)
         .await
         .map_err(|e| e.to_string())?
+}
+
+#[tauri::command]
+fn update_get_state(app: AppHandle) -> Result<updater::UpdateSnapshot, String> {
+    Ok(updater::snapshot(&app))
+}
+
+/// 手动/后台检查更新；force=false 时 10 分钟内复用上次结果
+#[tauri::command]
+async fn update_check(
+    app: AppHandle,
+    force: Option<bool>,
+) -> Result<updater::UpdateSnapshot, String> {
+    tauri::async_runtime::spawn_blocking(move || updater::check(&app, force.unwrap_or(true)))
+        .await
+        .map_err(|e| e.to_string())?
+}
+
+/// 下载并安装新版本；应用会在助手接管后退出并自动重启
+#[tauri::command]
+fn update_apply(app: AppHandle) -> Result<(), String> {
+    updater::start_apply(&app)
+}
+
+/// 忽略这个版本，不再在首页提示
+#[tauri::command]
+fn update_skip(app: AppHandle, version: String) -> Result<updater::UpdateSnapshot, String> {
+    updater::skip_version(&app, &version)
 }
 
 #[tauri::command]
@@ -1258,6 +1302,10 @@ fn handle_startup_deep_links(app: &AppHandle) -> Result<(), String> {
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
+    // 更新助手模式：不启动界面，替换/安装新版本后拉起它
+    if let Some(code) = updater::apply_from_args() {
+        std::process::exit(code);
+    }
     let store = TaskStore::new_file().expect("failed to init task store");
     let mut app_config = config::load_config();
     config::sync_autostart_flag(&mut app_config);
@@ -1293,6 +1341,7 @@ pub fn run() {
             reminders: ReminderState::new(),
             marked_complete: Mutex::new(HashSet::new()),
             feishu: feishu::FeishuRuntime::new(),
+            updater: updater::UpdaterRuntime::new(),
         })
         .invoke_handler(tauri::generate_handler![
             get_app_config,
@@ -1339,6 +1388,10 @@ pub fn run() {
             feishu_sync_now,
             feishu_create_table,
             feishu_test_connection,
+            update_get_state,
+            update_check,
+            update_apply,
+            update_skip,
             quit_app,
             update_shortcut,
             apply_display_mode
@@ -1448,6 +1501,9 @@ pub fn run() {
             let _ = handle_startup_deep_links(app.handle());
             reminder::start_reminder_loop(app.handle().clone());
             feishu::start_auto_sync(app.handle().clone());
+            updater::init(app.handle());
+            updater::start_auto_check(app.handle().clone());
+            updater::check_on_startup(app.handle().clone());
             Ok(())
         })
         .run(tauri::generate_context!())

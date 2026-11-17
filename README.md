@@ -135,7 +135,29 @@ TaskCap: Windows desktop adaptation of howardrock88/TaskIsland, built with Tauri
 | 快捷键 | 点击当前组合键即可修改快速新增快捷键，按 Esc 取消录制。 |
 | 数据 | 控制主面板后台预加载，并设置 15 至 300 秒的自动刷新间隔。 |
 | 飞书同步（可选） | 默认关闭。开启并填入飞书应用凭证后，任务同步到飞书多维表格，飞书里勾选完成会回写本地。 |
+| 关于 | 显示当前版本，提供「检查更新」与「自动检查更新」开关。 |
 | 操作 | 支持刷新数据，导出 JSON、Markdown、CSV，导入 JSON 或 CSV。 |
+
+---
+
+### 应用内更新
+
+发现新版本时，主面板顶部会出现一条提示：「发现新版本 vX.Y.Z」。点「立即更新」后软件自己完成下载、校验、安装和重启，不需要再去网页下载安装包。
+
+- 检查来源：`https://api.github.com/repos/Joyi-code/TaskCap/releases/latest`，只读取版本与资产信息。
+- 下载来源：GitHub Releases 的 `TaskCap_X.Y.Z_x64-setup.exe`，直接静默安装；不需要额外上传便携版（只有没传安装包、只传了名字含 `portable` 的 exe 时才走便携替换）。
+- 完整性校验：使用 GitHub API 返回的 SHA256 摘要校验安装包，不匹配就删除并保留旧版本。
+- 自动检查：启动 12 秒后检查一次，之后每 6 小时一次；设置页「关于」可关闭，关闭后只有手动点「检查更新」才联网。
+- 镜像源：设置环境变量 `TASKCAP_UPDATE_API` 指向自建 JSON 接口即可换源（企业内网用）。
+- 限流：GitHub 未登录接口每小时 60 次。正常情况下（缓存 10 分钟、自动检查 6 小时一次）不会触发；遇到了会提示大约几分钟后自动重试。需要更高额度时设置环境变量 `TASKCAP_UPDATE_TOKEN`（GitHub token），额度提升到每小时 5000 次。
+- 忽略某个版本：点提示条右侧的 ×，该版本不再提示；更高版本仍会提示。
+
+**升级不会丢数据**：任务库、配置、飞书凭证、同步状态全部在 `%APPDATA%\taskcap\`，不在程序目录，安装过程只覆盖程序文件。更新结果写在 `%APPDATA%\taskcap\update-result.json`，下次启动在设置页可见。
+
+发版约定：
+
+1. 四处版本号保持一致：`package.json`、`src-tauri/Cargo.toml`、`src-tauri/tauri.conf.json`、`src/version.ts`。
+2. Git tag 用 `vX.Y.Z`，Release 里上传 `TaskCap_X.Y.Z_x64-setup.exe` 即可，不需要额外传便携版。
 
 ---
 
@@ -248,6 +270,17 @@ npm run tauri:build
 
 > 不要用裸 `cargo build --release` 代替：Tauri 2 只有在启用 `custom-protocol` 特性时才把前端资源内嵌进 exe，否则窗口会按开发模式去连 `http://127.0.0.1:5181` 并显示「拒绝连接」。项目已在 `Cargo.toml` 声明 `custom-protocol` 特性，等价命令是 `cargo build --release --features custom-protocol`。
 
+发版防呆（两道，任一不满足都发不出去）：
+
+1. **编译期拦截**：`src-tauri/src/lib.rs` 里有一条 `compile_error!`。release 构建缺少 `custom-protocol` 时直接编译失败，提示改用 `npm run tauri:build`，不可能产出白屏包。
+2. **产物校验**：`scripts/check-release.ps1` 检查 exe 的版本号与 `package.json` 一致，并扫描二进制里是否真的内嵌了前端资源。`npm run tauri:build` 打包完成后自动调用它，`npm run verify` 也会调用；任一项不通过就中断，不会留下可上传的安装包。
+
+单独校验某个产物：
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts/check-release.ps1 -Exe D:\TaskCap\taskcap.exe
+```
+
 Tauri 打包目标当前配置为 NSIS 安装包，产物位于项目平级的 `.build\taskcap-target\release\bundle\nsis\` 目录。
 
 如果出现 `Visual Studio Build Tools not found`，请安装 Visual Studio Build Tools 2022，并确认已勾选 `Desktop development with C++` 组件。
@@ -340,6 +373,13 @@ Rust 后端依赖：
 ## 更新日志
 
 完整发布记录见 GitHub Releases。
+
+### v0.3.0
+
+- 新增应用内更新：主界面提示新版本，点「立即更新」自动下载、校验、静默安装并重启，无需手动下载安装包。
+- 更新只替换程序文件，任务库与飞书配置位于 `%APPDATA%\taskcap`，升级不丢失数据。
+- 设置页「关于」新增当前版本、检查更新、自动检查开关与上次检查结果。
+- 新增 4 项更新相关单元测试（版本比较、资产选择、仅替换 exe、联网拉取）。
 
 ### v0.2.0
 

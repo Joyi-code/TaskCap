@@ -37,6 +37,10 @@ fn default_panel_refresh_interval_secs() -> u32 {
     60
 }
 
+fn default_auto_check_updates() -> bool {
+    true
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct AppConfig {
@@ -79,6 +83,12 @@ pub struct AppConfig {
     /// 主面板已挂载时的自动刷新间隔（秒）
     #[serde(default = "default_panel_refresh_interval_secs")]
     pub panel_refresh_interval_secs: u32,
+    /// 启动时和后台自动检查新版本（关闭后只能手动检查，仍然不联网）
+    #[serde(default = "default_auto_check_updates")]
+    pub auto_check_updates: bool,
+    /// 用户主动忽略的版本号，同一个版本不再弹提示
+    #[serde(default)]
+    pub skipped_update_version: Option<String>,
 }
 
 impl Default for AppConfig {
@@ -98,6 +108,8 @@ impl Default for AppConfig {
             display_mode: default_display_mode(),
             panel_background_preload: default_panel_background_preload(),
             panel_refresh_interval_secs: default_panel_refresh_interval_secs(),
+            auto_check_updates: default_auto_check_updates(),
+            skipped_update_version: None,
         }
     }
 }

@@ -39,6 +39,9 @@ foreach ($entry in $versions.GetEnumerator()) {
 
 Write-Host "release files ok; version=$version"
 
+# 先确认 release exe 内嵌了前端资源，避免把 devUrl 白屏包发出去
+& "$PSScriptRoot\check-release.ps1"
+
 Push-Location (Join-Path $PWD "src-tauri")
 cargo test
 if ($LASTEXITCODE -ne 0) { Pop-Location; exit $LASTEXITCODE }

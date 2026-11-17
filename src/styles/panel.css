@@ -2684,3 +2684,100 @@ html.panel-dark .panel-feishu-detail {
   background: rgba(46, 196, 122, 0.12);
   border-color: rgba(110, 231, 168, 0.4);
 }
+
+/* 顶部新版本提示条 */
+.panel-update-banner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 8px 12px 0;
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: rgba(46, 196, 122, 0.14);
+  border: 1px solid rgba(46, 196, 122, 0.4);
+}
+
+.panel-update-icon {
+  flex-shrink: 0;
+  color: #0f7b4f;
+}
+
+.panel-update-text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+.panel-update-text b {
+  font-size: 11.5px;
+  font-weight: 700;
+}
+
+.panel-update-hint {
+  opacity: 0.65;
+  font-weight: 600;
+}
+
+.panel-update-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.panel-update-btn {
+  height: 24px;
+  padding: 0 10px;
+  border: none;
+  border-radius: 999px;
+  background: var(--ti-accent-strong);
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.panel-update-btn:hover {
+  filter: brightness(1.06);
+}
+
+.panel-update-btn:disabled {
+  opacity: 0.6;
+  cursor: default;
+  filter: none;
+}
+
+.panel-update-skip {
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: inherit;
+  opacity: 0.55;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.panel-update-skip:hover {
+  opacity: 1;
+  background: rgba(0, 0, 0, 0.06);
+}
+
+.panel-surface-dark .panel-update-banner,
+html.panel-dark .panel-update-banner {
+  background: rgba(46, 196, 122, 0.16);
+  border-color: rgba(110, 231, 168, 0.45);
+}
+
+.panel-surface-dark .panel-update-icon,
+html.panel-dark .panel-update-icon {
+  color: #6ee7a8;
+}

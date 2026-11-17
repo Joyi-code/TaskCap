@@ -10,6 +10,7 @@ import { SettingSection } from "./SettingSection";
 import { SettingToggle } from "./SettingToggle";
 import { AppConfig } from "./useAppConfig";
 import { PanelSettings } from "./usePanelSettings";
+import { formatUpdateTime, useUpdater } from "./useUpdater";
 
 const FOCUS_PRESETS = [15, 25, 45, 60] as const;
 type ExportFormat = "json" | "markdown" | "csv";
@@ -46,6 +47,12 @@ export function SettingsPanelView({
   const [isRecording, setIsRecording] = useState(false);
   const [tempShortcut, setTempShortcut] = useState("");
   const recordingRef = useRef<HTMLDivElement>(null);
+  const {
+    state: updateState,
+    message: updateMessage,
+    check: checkUpdate,
+    apply: applyUpdate,
+  } = useUpdater();
 
   const currentShortcut = appConfig.quickAddShortcut ?? "Ctrl+Alt+N";
 
@@ -377,6 +384,46 @@ export function SettingsPanelView({
           <span>当前版本</span>
           <strong>{APP_VERSION}</strong>
         </div>
+        <SettingToggle
+          label="自动检查更新"
+          checked={appConfig.autoCheckUpdates ?? true}
+          onChange={(checked) => void onSaveAppConfig({ autoCheckUpdates: checked })}
+        />
+        <div className="panel-capsule-group">
+          <button
+            type="button"
+            className="panel-capsule-btn panel-capsule-icon-btn"
+            disabled={updateState?.checking || updateState?.applying}
+            onClick={() => void checkUpdate().catch(() => undefined)}
+          >
+            <span>{updateState?.checking ? "检查中…" : "检查更新"}</span>
+          </button>
+          {updateState?.available ? (
+            <button
+              type="button"
+              className="panel-capsule-btn panel-capsule-icon-btn"
+              disabled={updateState?.applying}
+              onClick={() => void applyUpdate()}
+            >
+              <span>更新到 v{updateState.available.version}</span>
+            </button>
+          ) : null}
+        </div>
+        <p className="panel-setting-desc muted">
+          上次检查：{formatUpdateTime(updateState?.lastCheckAt ?? null)}
+          {updateState?.available ? `｜发现 v${updateState.available.version}` : ""}
+        </p>
+        <p className="panel-setting-desc muted">
+          更新只替换程序文件，任务数据存在 %APPDATA%\taskcap，升级不会丢失。
+        </p>
+        {updateState?.lastError ? (
+          <p className="panel-feishu-error">检查失败：{updateState.lastError}</p>
+        ) : updateMessage ? (
+          <p className="panel-setting-desc">{updateMessage}</p>
+        ) : null}
+        {updateState?.lastApplyMessage ? (
+          <p className="panel-setting-desc">{updateState.lastApplyMessage}</p>
+        ) : null}
       </SettingSection>
     </div>
   );

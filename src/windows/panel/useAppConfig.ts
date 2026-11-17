@@ -18,6 +18,8 @@ export type AppConfig = {
   panelBackgroundPreload: boolean;
   /** 主面板挂载后的自动刷新间隔（秒） */
   panelRefreshIntervalSecs: number;
+  /** 启动时与后台自动检查新版本 */
+  autoCheckUpdates: boolean;
 };
 
 const DEFAULTS: AppConfig = {
@@ -31,6 +33,7 @@ const DEFAULTS: AppConfig = {
   displayMode: "standard",
   panelBackgroundPreload: true,
   panelRefreshIntervalSecs: 60,
+  autoCheckUpdates: true,
 };
 
 /** 系统级配置 — 与 Rust config.json / 托盘 / 悬浮岛联动 */

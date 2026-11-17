@@ -14,6 +14,7 @@ import { PanelViewId } from "./panelViews";
 import { HistoryPanelView } from "./HistoryPanelView";
 import { SettingsPanelView } from "./SettingsPanelView";
 import { TaskPanelView } from "./TaskPanelView";
+import { UpdateBanner } from "./UpdateBanner";
 import { useAppConfig } from "./useAppConfig";
 import { usePanelSettings } from "./usePanelSettings";
 
@@ -296,6 +297,8 @@ export function PanelWindow() {
           </button>
         </div>
       </header>
+
+      {!showSettings && !showHistory ? <UpdateBanner /> : null}
 
       <section className="panel-body panel-body-scroll">
         {showSettings ? (
