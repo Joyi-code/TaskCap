@@ -21,6 +21,8 @@ export type FeishuSyncReport = {
   updated: number;
   pulled: number;
   skipped: number;
+  /** 本地已删除、这次从飞书删掉的记录数 */
+  deleted: number;
   durationMs: number;
 };
 
@@ -90,7 +92,7 @@ export function useFeishuSync() {
       const report = await invoke<FeishuSyncReport>("feishu_sync_now");
       setConnection("ok");
       setMessage(
-        `同步完成：新增 ${report.created}，更新 ${report.updated}，回写完成 ${report.pulled}，跳过 ${report.skipped}，耗时 ${report.durationMs} ms`,
+        `同步完成：新增 ${report.created}，更新 ${report.updated}，回写完成 ${report.pulled}，删除 ${report.deleted}，跳过 ${report.skipped}，耗时 ${report.durationMs} ms`,
       );
     } catch (error) {
       setConnection("fail");

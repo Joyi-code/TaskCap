@@ -27,6 +27,14 @@ const TABLE_NAME: &str = "TaskCap任务";
 const DEFAULT_AUTO_SYNC_MINUTES: u32 = 15;
 /// 飞书批量接口单次上限 100 条
 const MAX_RECORD_CHUNK: usize = 100;
+/// 一次同步最多删这么多条飞书记录，超过先跳过（防误删）
+const MAX_PRUNE_PER_SYNC: usize = 50;
+
+/// 删除保护：
+/// 本地库为空说明可能被重置，不能拿它去清空飞书；一次要删超过上限也先跳过。
+fn can_prune(local_count: usize, orphan_count: usize) -> bool {
+    local_count > 0 && orphan_count <= MAX_PRUNE_PER_SYNC
+}
 
 fn default_auto_sync_minutes() -> u32 {
     DEFAULT_AUTO_SYNC_MINUTES
@@ -109,14 +117,22 @@ pub struct FeishuSyncReport {
     pub updated: usize,
     pub pulled: usize,
     pub skipped: usize,
+    /// 本地已删除、这次从飞书删掉的记录数
+    pub deleted: usize,
     pub duration_ms: u64,
 }
 
 impl FeishuSyncReport {
     fn summary(&self) -> String {
         format!(
-            "本地 {} 条，新增 {}，更新 {}，回写完成 {}，跳过 {}，耗时 {}ms",
-            self.total, self.created, self.updated, self.pulled, self.skipped, self.duration_ms
+            "本地 {} 条，新增 {}，更新 {}，回写完成 {}，删除 {}，跳过 {}，耗时 {}ms",
+            self.total,
+            self.created,
+            self.updated,
+            self.pulled,
+            self.deleted,
+            self.skipped,
+            self.duration_ms
         )
     }
 }
@@ -709,6 +725,60 @@ fn sync_inner(app: &AppHandle) -> Result<FeishuSyncReport, String> {
     let tasks = snapshot_tasks(app)?;
 
     let mut sync_state = load_sync_state();
+
+    // 2) 删除：本地已删掉的任务，把飞书里对应记录一并删掉。
+    //    只删「同步状态里登记过」的记录，避免误删别人手工建的；
+    //    本地库为空或一次要删太多时跳过，防止数据库重置后把飞书清空。
+    let local_ids: std::collections::HashSet<String> =
+        tasks.iter().map(|task| task.id.to_string()).collect();
+    let mut orphan_record_ids: Vec<String> = Vec::new();
+    for record in &remote {
+        let Some(fields) = record.get("fields") else {
+            continue;
+        };
+        let local_id = text_value(fields.get("本地ID").unwrap_or(&Value::Null));
+        let local_id = local_id.trim();
+        if local_id.is_empty() || local_ids.contains(local_id) {
+            continue;
+        }
+        let record_id = record
+            .get("record_id")
+            .and_then(|value| value.as_str())
+            .unwrap_or("");
+        let tracked = sync_state
+            .records
+            .get(local_id)
+            .map(|entry| entry.record_id == record_id)
+            .unwrap_or(false);
+        if tracked && !record_id.is_empty() {
+            orphan_record_ids.push(record_id.to_string());
+        }
+    }
+
+    let mut deleted = 0usize;
+    if !orphan_record_ids.is_empty() {
+        if can_prune(local_ids.len(), orphan_record_ids.len()) {
+            // 删除失败不影响本次推送：记日志后继续
+            let prune_result = prune_records(&config, &token, &orphan_record_ids);
+            match prune_result {
+                Ok(count) => {
+                    deleted = count;
+                    sync_state.records.retain(|_, entry| {
+                        !orphan_record_ids.iter().any(|id| id == &entry.record_id)
+                    });
+                    log_line(&format!("pruned {deleted} orphan records"));
+                }
+                Err(error) => log_line(&format!("prune failed: {error}")),
+            }
+        } else {
+            log_line(&format!(
+                "prune skipped: local={} orphans={}",
+                local_ids.len(),
+                orphan_record_ids.len()
+            ));
+        }
+    }
+
     let mut creates: Vec<(Value, String, String)> = Vec::new();
     let mut updates: Vec<(String, Value, String, String)> = Vec::new();
     let mut skipped = 0usize;
@@ -814,12 +884,32 @@ fn sync_inner(app: &AppHandle) -> Result<FeishuSyncReport, String> {
         updated,
         pulled,
         skipped,
+        deleted,
         duration_ms: started.elapsed().as_millis() as u64,
     })
 }
 
-fn snapshot_tasks(app: &AppHandle) -> Result<Vec<TaskItem>, String> {
-    let runtime = app.state::<AppState>();
+/// 批量删除记录。飞书接口要求 records 是 record_id 字符串数组。
+fn prune_records(
+    config: &FeishuConfig,
+    token: &str,
+    record_ids: &[String],
+) -> Result<usize, String> {
+    let mut deleted = 0usize;
+    for chunk in record_ids.chunks(MAX_RECORD_CHUNK) {
+        let records: Vec<Value> = chunk.iter().map(|record_id| json!(record_id)).collect();
+        api(
+            token,
+            "POST",
+            &records_path(config, "batch_delete"),
+            Some(json!({ "records": records })),
+        )?;
+        deleted += chunk.len();
+    }
+    Ok(deleted)
+}
+
+fn snapshot_tasks(app: &AppHandle) -> Result<Vec<TaskItem>, String> {    let runtime = app.state::<AppState>();
     let store = runtime.store.lock().map_err(|e| e.to_string())?;
     Ok(store.tasks.clone())
 }
@@ -1135,6 +1225,17 @@ mod tests {
         assert_eq!(text_value(&json!([{ "text": "已完成" }])), "已完成");
         assert_eq!(text_value(&json!(null)), "");
         assert_eq!(text_value(&json!({"text": "abc"})), "abc");
+    }
+
+    #[test]
+    fn prune_needs_tasks_and_small_batch() {
+        // 本地库为空：可能是被重置了，不能拿它清空飞书
+        assert!(!can_prune(0, 1));
+        // 正常删除
+        assert!(can_prune(10, 1));
+        assert!(can_prune(10, MAX_PRUNE_PER_SYNC));
+        // 一次删太多，先跳过
+        assert!(!can_prune(100, MAX_PRUNE_PER_SYNC + 1));
     }
 
     #[test]

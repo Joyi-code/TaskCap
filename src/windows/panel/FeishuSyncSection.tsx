@@ -125,7 +125,7 @@ export function FeishuSyncSection() {
       </div>
       <p className="panel-setting-desc muted">
         关闭时 TaskCap 完全离线，不联网、不上传。开启后任务会同步到飞书多维表格「TaskCap任务」，
-        在飞书里勾「已完成」也会回写本地。
+        在飞书里勾「已完成」也会回写本地；本地删除任务会同步删掉飞书记录（带防误删保护）。
       </p>
 
       {state?.enabled && !configured ? (
