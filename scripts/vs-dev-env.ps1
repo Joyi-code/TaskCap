@@ -41,10 +41,6 @@ function Invoke-InVsDevShell {
   )
 
   $toolchain = Get-WinToolchain
-  if (-not $toolchain) {
-    $toolchain = Get-PortableWinSdk
-  }
-
   if ($toolchain) {
     # Set the whole toolchain explicitly: VsDevCmd relies on SDK registry entries
     # that may be missing even when the SDK files are installed.
@@ -90,9 +86,7 @@ $Command
 }
 
 # Installed Windows SDK paths. Returns $null when Lib/Include are incomplete.
-# Set TASKCAP_FORCE_PORTABLE_SDK=1 to skip it and use the portable copy.
 function Get-SystemSdkPaths {
-  if ($env:TASKCAP_FORCE_PORTABLE_SDK -eq "1") { return $null }
   $roots = @(
     "${env:ProgramFiles(x86)}\Windows Kits\10",
     "$env:ProgramFiles\Windows Kits\10"
@@ -163,40 +157,4 @@ function Get-WinToolchain {
     Path    = ($pathParts -join ";")
     Rc      = $sdk.Rc
   }
-}
-
-# Portable Windows SDK: D:\codex\winsdk\env.ps1 provides INCLUDE/LIB/PATH/RC.
-# TASKCAP_WINSDK_ENV overrides the path; returns $null when not found.
-function Get-PortableWinSdk {
-  $candidates = @()
-  if ($env:TASKCAP_WINSDK_ENV) { $candidates += $env:TASKCAP_WINSDK_ENV }
-  $candidates += "D:\codex\winsdk\env.ps1"
-
-  foreach ($path in $candidates) {
-    if (-not (Test-Path -LiteralPath $path)) { continue }
-    $probe = @"
-. '$path' *> `$null
-'INC|' + `$env:INCLUDE
-'LIB|' + `$env:LIB
-'PATH|' + `$env:PATH
-'RC|' + `$env:RC
-"@
-    $lines = & powershell -NoProfile -Command $probe 2>$null
-    $values = @{}
-    foreach ($line in $lines) {
-      if ($line -match '^(INC|LIB|PATH|RC)\|(.*)$') {
-        $values[$Matches[1]] = $Matches[2]
-      }
-    }
-    if ($values.ContainsKey("INC") -and $values.ContainsKey("LIB")) {
-      Write-Host "portable Windows SDK: $path"
-      return @{
-        Include = $values["INC"]
-        Lib     = $values["LIB"]
-        Path    = $values["PATH"]
-        Rc      = $values["RC"]
-      }
-    }
-  }
-  return $null
 }
