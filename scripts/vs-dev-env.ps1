@@ -40,23 +40,33 @@ function Invoke-InVsDevShell {
     [string] $WorkingDirectory = $PWD.Path
   )
 
-  $vsDevCmd = Get-VsDevCmdPath
-  $winsdk = Get-PortableWinSdk
-  if ($vsDevCmd -or $winsdk) {
-    $prelude = ""
-    if ($winsdk) {
-      # When the system SDK is missing, use the portable nuget SDK for INCLUDE/LIB.
-      $prelude = @"
-set "INCLUDE=$($winsdk.Include)"
-set "LIB=$($winsdk.Lib)"
-set "PATH=$($winsdk.Path)"
-set "RC=$($winsdk.Rc)"
-"@
-    }
-    $callVs = if ($vsDevCmd) { "call `"$vsDevCmd`" -arch=x64 -host_arch=x64 >nul" } else { "" }
+  $toolchain = Get-WinToolchain
+  if (-not $toolchain) {
+    $toolchain = Get-PortableWinSdk
+  }
+
+  if ($toolchain) {
+    # Set the whole toolchain explicitly: VsDevCmd relies on SDK registry entries
+    # that may be missing even when the SDK files are installed.
     $cmd = @"
-$callVs
-$prelude
+set "INCLUDE=$($toolchain.Include)"
+set "LIB=$($toolchain.Lib)"
+set "PATH=$($toolchain.Path);%PATH%"
+set "RC=$($toolchain.Rc)"
+cd /d "$WorkingDirectory"
+$Command
+"@
+
+    $cmdFile = Join-Path $env:TEMP "taskcap-vs-dev.cmd"
+    Set-Content -LiteralPath $cmdFile -Value $cmd -Encoding ASCII
+    cmd /c $cmdFile
+    return $LASTEXITCODE
+  }
+
+  $vsDevCmd = Get-VsDevCmdPath
+  if ($vsDevCmd) {
+    $cmd = @"
+call "$vsDevCmd" -arch=x64 -host_arch=x64 >nul
 cd /d "$WorkingDirectory"
 $Command
 "@
@@ -79,8 +89,84 @@ $Command
   }
 }
 
+# Installed Windows SDK paths. Returns $null when Lib/Include are incomplete.
+# Set TASKCAP_FORCE_PORTABLE_SDK=1 to skip it and use the portable copy.
+function Get-SystemSdkPaths {
+  if ($env:TASKCAP_FORCE_PORTABLE_SDK -eq "1") { return $null }
+  $roots = @(
+    "${env:ProgramFiles(x86)}\Windows Kits\10",
+    "$env:ProgramFiles\Windows Kits\10"
+  )
+  foreach ($root in $roots) {
+    $libRoot = Join-Path $root "Lib"
+    $incRoot = Join-Path $root "Include"
+    $binRoot = Join-Path $root "bin"
+    if (-not (Test-Path -LiteralPath $libRoot) -or -not (Test-Path -LiteralPath $incRoot)) { continue }
+    $versions = Get-ChildItem -LiteralPath $libRoot -Directory -ErrorAction SilentlyContinue |
+      Where-Object { $_.Name -match '^10\.' } | Sort-Object Name -Descending
+    foreach ($version in $versions) {
+      $ver = $version.Name
+      $lib = Join-Path $libRoot "$ver\um\x64\OleAut32.lib"
+      $inc = Join-Path $incRoot "$ver\um\windows.h"
+      if (-not (Test-Path -LiteralPath $lib) -or -not (Test-Path -LiteralPath $inc)) { continue }
+      return @{
+        Include = "$incRoot\$ver\ucrt;$incRoot\$ver\um;$incRoot\$ver\shared;$incRoot\$ver\winrt"
+        Lib     = "$libRoot\$ver\ucrt\x64;$libRoot\$ver\um\x64"
+        Path    = "$binRoot\$ver\x64"
+        Rc      = "$binRoot\$ver\x64\rc.exe"
+      }
+    }
+  }
+  return $null
+}
+
+# MSVC compiler paths from the latest Visual Studio Build Tools install.
+function Get-MsvcPaths {
+  $vsDevCmd = Get-VsDevCmdPath
+  if (-not $vsDevCmd) { return $null }
+  $tools = Split-Path -Parent $vsDevCmd
+  $common7 = Split-Path -Parent $tools
+  $root = Split-Path -Parent $common7
+  $msvcRoot = Join-Path $root "VC\Tools\MSVC"
+  if (-not (Test-Path -LiteralPath $msvcRoot)) { return $null }
+  $versions = Get-ChildItem -LiteralPath $msvcRoot -Directory -ErrorAction SilentlyContinue |
+    Sort-Object Name -Descending
+  foreach ($version in $versions) {
+    $bin = Join-Path $version.FullName "bin\Hostx64\x64"
+    if (-not (Test-Path -LiteralPath (Join-Path $bin "link.exe"))) { continue }
+    return @{
+      Bin     = $bin
+      Include = Join-Path $version.FullName "include"
+      Lib     = Join-Path $version.FullName "lib\x64"
+    }
+  }
+  return $null
+}
+
+# Full toolchain: system MSVC + system Windows SDK. Null when either is unusable.
+function Get-WinToolchain {
+  $sdk = Get-SystemSdkPaths
+  $msvc = Get-MsvcPaths
+  if (-not $sdk -or -not $msvc) { return $null }
+
+  $pathParts = @($msvc.Bin, $sdk.Path)
+  foreach ($cargoHome in @($env:CARGO_HOME, "D:\codex\.cargo", (Join-Path $env:USERPROFILE ".cargo"))) {
+    if (-not $cargoHome) { continue }
+    $bin = Join-Path $cargoHome "bin"
+    if (Test-Path -LiteralPath (Join-Path $bin "cargo.exe")) { $pathParts += $bin }
+  }
+
+  Write-Host "toolchain: system MSVC + Windows SDK"
+  return @{
+    Include = "$($msvc.Include);$($sdk.Include)"
+    Lib     = "$($msvc.Lib);$($sdk.Lib)"
+    Path    = ($pathParts -join ";")
+    Rc      = $sdk.Rc
+  }
+}
+
 # Portable Windows SDK: D:\codex\winsdk\env.ps1 provides INCLUDE/LIB/PATH/RC.
-# TASKCAP_WINSDK_ENV overrides the path; returns $null when not found (use the system SDK).
+# TASKCAP_WINSDK_ENV overrides the path; returns $null when not found.
 function Get-PortableWinSdk {
   $candidates = @()
   if ($env:TASKCAP_WINSDK_ENV) { $candidates += $env:TASKCAP_WINSDK_ENV }
